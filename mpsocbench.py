@@ -86,6 +86,13 @@ def incompleteSettings(frame, name):
 		ret = 1
 	
 	return ret
+
+## Informações sobre o MPSoCBench ( GUI )
+def about():
+	messagebox.showinfo(title = 'About', message = 'falta completar...')
+
+def helpUse():
+	messagebox.showinfo(title = 'Help', message = 'falta completar...')
 '''
 Funcoes temporarias para testar os botoes
 '''
@@ -126,6 +133,13 @@ class Window(Frame):
 		Frame.__init__( self, master )
 		master.title('MPSoCBench')
 		
+		# Menu inicial
+		menubar = Menu( self.master, bg = '#A9A9A9' ) 		
+		menubar.add_command( label = 'About', command = about )
+		menubar.add_command( label = 'Help', command = helpUse )
+		self.master.config( menu = menubar ) 
+
+		# Inicialização das variaveis 
 		processors, n_cores, interconnections, applications = elements()
 		
 		# Parte 1 : Direcionada para as opções de Configurações
