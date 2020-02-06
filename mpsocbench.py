@@ -1,5 +1,7 @@
 from tkinter import *
 
+from tkinter import messagebox
+
 ## Organização dos itens do Simulador
 def elements():
 	processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC', 'All' ]
@@ -49,13 +51,41 @@ def newObjTkinter( n ):
 
 ## Verificação e Tratamento da opção All
 def allSelected( var ):
-	
+
 	n = len( var )
 
 	if var[n-1].get():
 		for i in range( n ):
 			var[i].set( True )
+
+## Verificação de Configurações incompletas
+def incompleteSettings(frame, name):
 	
+	tmp = []			# Lista temporaria para receber os onvalue dos objetos das checkboxes
+	ret = 0				# variavel para armazenar o que deve ser retornado deste modulo 
+	
+	# Loop para a transferencia dos valores para a lista temporaria
+	for i in frame:
+		tmp.append( i.get() ) 
+
+	# Quando uma seção não estiver selecionada, enviar uma mensagem de erro para cada caso separadamente.
+	if True not in tmp and name == 'Processors':
+		messagebox.showerror(title = 'Incomplete Settings', message = 'Select at least one valid option in Processors.\nComplete this section and try again.')
+		ret = 1
+	
+	if True not in tmp and name == 'Inter':
+		messagebox.showerror(title = 'Incomplete Settings', message = 'Select at least one valid option in Interconnections.\nComplete this section and try again.')
+		ret = 1
+	
+	if True not in tmp and name == 'NCores':
+		messagebox.showerror(title = 'Incomplete Settings', message = 'Select at least one valid option in Cores.\nComplete this section and try again.')
+		ret = 1
+
+	if True not in tmp and name == 'Apps':
+		messagebox.showerror(title = 'Incomplete Settings', message = 'Select at least one valid option in Applications.\nComplete this section and try again.')
+		ret = 1
+	
+	return ret
 '''
 Funcoes temporarias para testar os botoes
 '''
@@ -63,20 +93,32 @@ Funcoes temporarias para testar os botoes
 def btExit():
 	exit()
 
-def Build(var1, var2, var3, var41, var42, var43):
+def Build(frames):
 	
-	allSelected(var1)
-	allSelected(var2)
-	allSelected(var3)
-	allSelected(var41)
-	allSelected(var42)
-	allSelected(var43)
+	sfw = [] 			# variavel para agrupar todas as aplicações
+	count = 0			# variavel para fazer a contagem das seções incompletas
+	
+	# Loop para verificar se a opção all foi selecionada, e agrupar as aplicações
+	for f in frames:
+		allSelected( frames[f] )
+		if f == 'Parmib' or f == 'Splash2' or f == 'Misc':
+			sfw.extend( frames[f] )
+	
+	# verificar as aplicações separadamente
+	count += incompleteSettings(sfw, 'Apps')
+	
+	# verificar as demais seções 
+	for f in frames: 
+		if f != 'Parmib' or f != 'Splash2' or f != 'Misc':
+			count += incompleteSettings(frames[f], f)
+	
+	# Se as configurações são validas, prosseguir com a contrução  do simulador
+	if count == 0:
+		print('Pode continuar') 		# mensagem temporaria
 		
-	
 def Execute():
 	exit()
 
-	
 # Classe destinada a interface grafica
 
 class Window(Frame):
@@ -94,13 +136,13 @@ class Window(Frame):
 		part11.pack( side = TOP, fill = X, expand = 1 )
 		
 		# Inicialização de algumas variaveis que serão usadas nesta parte 1.1
-		var1 = []
+		frameProcessors = []
 		op1 = []
 		
-		var1 = newObjTkinter(5)		
+		frameProcessors = newObjTkinter(5)		
 
 		for i, j in enumerate( processors ):
-			op1.append( Checkbutton( part11, text = j, variable = var1[i]) )
+			op1.append( Checkbutton( part11, text = j, variable = frameProcessors[i]) )
 			op1[i].pack( side = LEFT, expand = 1 )	
 			
 		## Parte 1.2. : Dispositivos
@@ -108,13 +150,13 @@ class Window(Frame):
 		part12.pack( side = TOP, fill = X, expand = 1 )
 		
 		# Inicialização de algumas variaveis que serão usadas nesta parte 1.2
-		var2 = []
+		frameInter = []
 		op2 = []
 		
-		var2 = newObjTkinter(4)	
+		frameInter = newObjTkinter(4)	
 		
 		for i, j in enumerate( interconnections ):
-			op2.append( Checkbutton( part12, text = j, variable = var2[i] ) )
+			op2.append( Checkbutton( part12, text = j, variable = frameInter[i] ) )
 			op2[i].pack( side = LEFT, expand = 1 )
 		
 		## Parte 1.3. : numero de cores
@@ -122,13 +164,13 @@ class Window(Frame):
 		part13.pack( side = TOP, fill = X, expand = 1 )
 		
 		# Inicialização de algumas variaveis que serão usadas nesta parte 1.3
-		var3 = []
+		frameNCores = []
 		op3 = []
 		
-		var3 = newObjTkinter(8)
+		frameNCores = newObjTkinter(8)
 		
 		for i, j in enumerate( n_cores ):
-			op3.append( Checkbutton( part13, text = j, variable = var3[i] ) ) 
+			op3.append( Checkbutton( part13, text = j, variable = frameNCores[i] ) ) 
 			op3[i].pack( side = LEFT, expand = 1 )
 		
 		## Parte 1.4. : Aplicações
@@ -144,40 +186,40 @@ class Window(Frame):
 		
 		# Inicialização de algumas variaveis que serão usadas nesta parte 1.4
 		# 1.4.1
-		var41 = []
+		frameParMibench = []
 		op41 = []
 
-		var41 = newObjTkinter(8)
+		frameParMibench = newObjTkinter(8)
 		
 		# 1.4.2
-		var42 = []
+		frameSplash2 = []
 		op42 = []
 
-		var42 = newObjTkinter(5)
+		frameSplash2 = newObjTkinter(5)
 		
 		# 1.4.3
-		var43 = []
+		frameMisc = []
 		op43 = []
 
-		var43 = newObjTkinter(7)
+		frameMisc = newObjTkinter(7)
 		
 		for i, j in enumerate( applications ):
 	
 			# ParMibench
 			if separador == 0 and i < 8:
-				op41.append( Checkbutton( part141, text = j, variable = var41[i] ) )
+				op41.append( Checkbutton( part141, text = j, variable = frameParMibench[i] ) )
 				op41[i].pack( side = TOP, anchor = W  )
 				part141.pack( side = LEFT, anchor = N, fill = Y, expand = 1 )
 
 			# SPLASH2
 			if separador == 1 and i < 13:
-			    op42.append( Checkbutton( part142, text = j, variable = var42[i-8] ) )
+			    op42.append( Checkbutton( part142, text = j, variable = frameSplash2[i-8] ) )
 			    op42[i-8].pack( side = TOP, anchor = W )
 			    part142.pack( side = LEFT, anchor = N, fill = Y, expand = 1 )
 
 			# Miscellaneous   
 			if separador == 2 and i < 20 :
-			    op43.append( Checkbutton( part143, text = j, variable = var43[i-13] ) )
+			    op43.append( Checkbutton( part143, text = j, variable = frameMisc[i-13] ) )
 			    op43[i-13].pack( side = TOP, anchor = W )
 			    part143.pack( side = LEFT, anchor = N, fill = Y, expand = 1 )
 
@@ -192,9 +234,12 @@ class Window(Frame):
 	    # Parte 3 : Direcionada para os botões 
 		part3 = LabelFrame( master )
 		
+		frames = { 'Processors':frameProcessors, 'Inter':frameInter, 'Ncores': frameNCores, 'Parmib': frameParMibench, 'Splash2': frameSplash2, 'Misc':frameMisc }
+
+		
 		# Criando botões
 		## Uso para testes dos checkbox
-		bt1 = Button( part3, text = 'Build', command = lambda: Build( var1, var2, var3, var41, var42, var43 ) )		
+		bt1 = Button( part3, text = 'Build', command = lambda: Build( frames ) )		
 		bt2 = Button( part3, text = 'Execute', command = Execute )
 		bt3 = Button( part3, text = 'Quit', command = btExit )
 		
@@ -204,7 +249,7 @@ class Window(Frame):
 		
 		part3.pack( fill = X, expand = 1, anchor = N, padx = 7 )
 
-
+		
 
                 
 root = Tk()
