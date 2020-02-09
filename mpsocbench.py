@@ -49,6 +49,17 @@ def newObjTkinter( n ):
 		
 	return variables
 
+## Modulo direcionado para a configuração power , um extra para os processadores MIPS e SPARC
+def pwr( frameP ):
+	
+	if frameP[1].get() == True:			# posição do processador MIPS na lista 
+		pwrMIPS = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor MIPS with power?')
+	if frameP[3].get() == True:			# posição do processador SPARC na lista 
+		pwrSPARC = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor SPARC with power?')
+		
+	return pwrMIPS, pwrSPARC
+	
+	
 ## Verificação e Tratamento da opção All
 def allSelected( var ):
 
@@ -121,8 +132,10 @@ def Build(frames):
 	
 	# Se as configurações são validas, prosseguir com a contrução  do simulador
 	if count == 0:
-		print('Pode continuar') 		# mensagem temporaria
+
+		pwrMIPS, pwrSPARC = pwr(frames['Processors'])
 		
+		print('Pode continuar') 		# mensagem temporaria
 def Execute():
 	exit()
 
@@ -253,9 +266,9 @@ class Window(Frame):
 		
 		# Criando botões
 		## Uso para testes dos checkbox
-		bt1 = Button( part3, text = 'Build', command = lambda: Build( frames ) )		
-		bt2 = Button( part3, text = 'Execute', command = Execute )
-		bt3 = Button( part3, text = 'Quit', command = btExit )
+		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames ) )		
+		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = Execute )
+		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
 		
 		bt1.pack( side = LEFT, fill = X, expand = 1 )
 		bt2.pack( side = LEFT, fill = X, expand = 1 )
