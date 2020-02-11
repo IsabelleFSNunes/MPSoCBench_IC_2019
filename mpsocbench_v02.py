@@ -7,7 +7,7 @@ def elements():
 	processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC' ]
 	n_cores = ['1', '2', '4', '8', '16', '32', '64']
 	interconnections = ['NoC approximately timed', 'NoC loosely timed','Router loosely timed']
-	applications = ['Basicmath', 'Dijkstra', 'SHA', 'Susan-corners', 'Susan-edges', 'Susan-smoothing','Stringsearch', 'All', 'FFT', 'LU', 'Water', 'Water-spatial', 'All', 'Multi-parallel', 'Multi-8', 'Multi-16','Office-Telecomm', 'Security', 'Network-Automotive', 'All']
+	applications = ['Basicmath', 'Dijkstra', 'SHA', 'Susan-corners', 'Susan-edges', 'Susan-smoothing','Stringsearch', 'FFT', 'LU', 'Water', 'Water-spatial', 'Multi-8', 'Multi-16', 'Multi-parallel',  'Network-Automotive',  'Office-Telecomm', 'Security']
 	
 	return processors, n_cores, interconnections, applications
 
@@ -36,6 +36,22 @@ def validPlatforms( app ):
 				M[i][:3] = [False] * 4
 	return M  	
 
+## Verificação das entradas
+def validAppsCores( frameApp , frameCores ):
+	lin = []
+	col = []
+	
+	for i, j in enumerate(frameApp):
+		if j.get() == True:
+			lin.append(i)
+			
+	for i, j in enumerate(frameCores):
+		if j.get() == True:
+			col.append(i)
+	
+	return lin, col
+	
+	
 ## Criação de novos objetos do Tkinter
 def newObjTkinter( n ):
 
@@ -93,6 +109,7 @@ def incompleteSettings(frame, name):
 
 ## Modulo direcionado para a configuração power , um extra para os processadores MIPS e SPARC
 def pwr( frameP ):
+	pwrMIPS, pwrSPARC = False, False
 	
 	if frameP[1].get() == True:			# posição do processador MIPS na lista 
 		pwrMIPS = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor MIPS with power?')
@@ -100,7 +117,6 @@ def pwr( frameP ):
 		pwrSPARC = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor SPARC with power?')
 		
 	return pwrMIPS, pwrSPARC
-	
 	
 	
 ## Informações sobre o MPSoCBench ( GUI )
@@ -116,7 +132,7 @@ Funcoes temporarias para testar os botoes
 def btExit():
 	exit()
 
-def Build(frames):
+def Build(frames, applications):
 	
 	count = 0			# variavel para fazer a contagem das seções incompletas
 	
@@ -131,6 +147,21 @@ def Build(frames):
 		pwrMIPS, pwrSPARC = pwr(frames['Processors'])
 		
 		print(pwrMIPS, pwrSPARC )
+		
+		Matriz = validPlatforms( applications )
+
+		lin, col = validAppsCores(frames['Apps'] , frames['Ncores'] )
+		print(lin, col)
+		
+		for l in lin:
+			print(Matriz[l])
+			for c in col:
+				print(Matriz[l][c])
+				if Matriz[l][c] == False:
+					messagebox.showinfo(title = 'Warning', message = 'ESSA OPÇÃO NÃO PODE SER CONCLUIDA...')
+				# else:
+				# build the combination
+		
 		
 def Execute():
 	exit()
@@ -240,25 +271,25 @@ class Window(Frame):
 		frameMisc = newObjTkinter(6)
 				
 		for i, j in enumerate( applications ):
-			if j == 'All':
+			if j == 'FFT' or j == 'Multi-8':
 				separador+= 1	
 				
 			# ParMibench
-			if separador == 0 and i < 8:
+			if separador == 0:
 				op41.append( Checkbutton( part141, text = j, variable = frameParMibench[i] ) )
 				op41[i].pack( side = TOP, anchor = W  )
 				part141.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 		
 			# SPLASH2
-			if separador == 1 and i < 13 and j != 'All':
-				op42.append( Checkbutton( part142, text = j, variable = frameSplash2[i-8] ) )
-				op42[i-8].pack( side = TOP, anchor = W )
+			if separador == 1:
+				op42.append( Checkbutton( part142, text = j, variable = frameSplash2[i-7] ) )
+				op42[i-7].pack( side = TOP, anchor = W )
 				part142.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 			    
 			# Miscellaneous   
-			if separador == 2 and i < 20 and j != 'All':
-				op43.append( Checkbutton( part143, text = j, variable = frameMisc[i-13] ) )
-				op43[i-13].pack( side = TOP, anchor = W )
+			if separador == 2:
+				op43.append( Checkbutton( part143, text = j, variable = frameMisc[i-11] ) )
+				op43[i-11].pack( side = TOP, anchor = W )
 				part143.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 	
 		# Botões All de cada tipo de Aplicações
@@ -287,7 +318,7 @@ class Window(Frame):
 		
 		# Criando botões
 		## Uso para testes dos checkbox
-		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames ) )		
+		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, applications ) )		
 		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = Execute )
 		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
 		
@@ -298,12 +329,14 @@ class Window(Frame):
 		part3.pack( fill = X, expand = 1, anchor = N, padx = 7 )
 
 		
+def main():               
+	root = Tk()
 
-                
-root = Tk()
+	root.geometry('540x480')
 
-root.geometry('540x480')
+	app = Window(root)
 
-app = Window(root)
+	root.mainloop()
 
-root.mainloop()
+if __name__ == "__main__":
+	main()

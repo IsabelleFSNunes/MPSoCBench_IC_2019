@@ -7,8 +7,7 @@ def elements():
 	processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC', 'All' ]
 	n_cores = ['1', '2', '4', '8', '16', '32', '64', 'All' ]
 	interconnections = ['NoC approximately timed', 'NoC loosely timed','Router loosely timed', 'All']
-	applications = ['Basicmath', 'Dijkstra', 'SHA', 'Susan-corners', 'Susan-edges', 'Susan-smoothing','Stringsearch', 'All', 'FFT', 'LU', 'Water', 'Water-spatial', 'All', 'Multi-parallel', 'Multi-8', 'Multi-16','Office-Telecomm', 'Security', 'Network-Automotive', 'All']
-	
+	applications = ['Basicmath', 'Dijkstra', 'SHA', 'Susan-corners', 'Susan-edges', 'Susan-smoothing','Stringsearch', 'All', 'FFT', 'LU', 'Water', 'Water-spatial', 'All', 'Multi-8', 'Multi-16', 'Multi-parallel',  'Network-Automotive', 'Office-Telecomm', 'Security', 'All']
 	return processors, n_cores, interconnections, applications
 
 ## Opções válidas para cada configuração
@@ -38,6 +37,21 @@ def validPlatforms( app ):
 				M[i][:3] = [False] * 4
 	return M  	
 
+## Verificação das entradas
+def validAppsCores( frameApp , frameCores ):
+	lin = []
+	col = []
+	
+	for i, j in enumerate(frameApp):
+		if j.get() == True:
+			lin.append(i)
+			
+	for i, j in enumerate(frameCores):
+		if j.get() == True:
+			col.append(i)
+	
+	return lin, col
+
 ## Criação de novos objetos do Tkinter
 def newObjTkinter( n ):
 
@@ -51,6 +65,8 @@ def newObjTkinter( n ):
 
 ## Modulo direcionado para a configuração power , um extra para os processadores MIPS e SPARC
 def pwr( frameP ):
+
+	pwrMIPS, pwrSPARC = False, False
 	
 	if frameP[1].get() == True:			# posição do processador MIPS na lista 
 		pwrMIPS = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor MIPS with power?')
@@ -102,8 +118,11 @@ def incompleteSettings(frame, name):
 def about():
 	messagebox.showinfo(title = 'About', message = 'falta completar...')
 
+## Informações sobre o uso do simulador, confifgurações compatíveis ... 
 def helpUse():
 	messagebox.showinfo(title = 'Help', message = 'falta completar...')
+
+
 '''
 Funcoes temporarias para testar os botoes
 '''
@@ -111,24 +130,26 @@ Funcoes temporarias para testar os botoes
 def btExit():
 	exit()
 
-def Build(frames):
+def Build(frames, window, applications):
 	
 	sfw = [] 			# variavel para agrupar todas as aplicações
 	count = 0			# variavel para fazer a contagem das seções incompletas
 	
 	# Loop para verificar se a opção all foi selecionada, e agrupar as aplicações
 	for f in frames:
-		allSelected( frames[f] )
-		if f == 'Parmib' or f == 'Splash2' or f == 'Misc':
-			sfw.extend( frames[f] )
+		if f == 'Apps':
+			for i in frames[f]:
+				allSelected(i)
+				sfw.extend(i)
+		else:
+			allSelected( frames[f] )
 	
-	# verificar as aplicações separadamente
-	count += incompleteSettings(sfw, 'Apps')
-	
-	# verificar as demais seções 
+	frames.pop('Apps')
+	frames.update({'Apps': sfw})	
+	print(len(sfw))
+	# Verificar se as seções estão completas
 	for f in frames: 
-		if f != 'Parmib' or f != 'Splash2' or f != 'Misc':
-			count += incompleteSettings(frames[f], f)
+		count += incompleteSettings(frames[f], f)
 	
 	# Se as configurações são validas, prosseguir com a contrução  do simulador
 	if count == 0:
@@ -136,6 +157,22 @@ def Build(frames):
 		pwrMIPS, pwrSPARC = pwr(frames['Processors'])
 		
 		print('Pode continuar') 		# mensagem temporaria
+		
+		# window.geometry('1000x480')
+		Matriz = validPlatforms( applications )
+		
+		lin, col = validAppsCores( sfw, frames['Ncores'] )
+		print(lin, col)
+		
+		for l in lin:
+			print(Matriz[l])
+			for c in col:
+				print(Matriz[l][c])
+				if Matriz[l][c] == False:
+					messagebox.showinfo(title = 'Warning', message = 'ESSA OPÇÃO NÃO PODE SER CONCLUIDA...')
+		
+		
+		
 def Execute():
 	exit()
 
@@ -171,7 +208,7 @@ class Window(Frame):
 		for i, j in enumerate( processors ):
 			op1.append( Checkbutton( part11, text = j, variable = frameProcessors[i]) )
 			op1[i].pack( side = LEFT, expand = 1 )	
-			
+		
 		## Parte 1.2. : Dispositivos
 		part12 = LabelFrame( part1, text = 'Interconnections', padx = 5, pady = 5 )
 		part12.pack( side = TOP, fill = X, expand = 1 )
@@ -236,37 +273,39 @@ class Window(Frame):
 			if separador == 0 and i < 8:
 				op41.append( Checkbutton( part141, text = j, variable = frameParMibench[i] ) )
 				op41[i].pack( side = TOP, anchor = W  )
-				part141.pack( side = LEFT, anchor = N, fill = Y, expand = 1 )
+				part141.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 
 			# SPLASH2
 			if separador == 1 and i < 13:
 			    op42.append( Checkbutton( part142, text = j, variable = frameSplash2[i-8] ) )
 			    op42[i-8].pack( side = TOP, anchor = W )
-			    part142.pack( side = LEFT, anchor = N, fill = Y, expand = 1 )
+			    part142.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 
 			# Miscellaneous   
 			if separador == 2 and i < 20 :
 			    op43.append( Checkbutton( part143, text = j, variable = frameMisc[i-13] ) )
 			    op43[i-13].pack( side = TOP, anchor = W )
-			    part143.pack( side = LEFT, anchor = N, fill = Y, expand = 1 )
+			    part143.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 
 			if j == 'All':
 				separador+= 1	
 				
 		part1.pack( side = TOP, padx = 5, pady = 5 )
-	    	    
+	    
+		frameApps = [ frameParMibench, frameSplash2, frameMisc ]
+		    
 	    # Parte 2 : Direcionada para a lista de Configurações já escolhidas
 		#part2 = LabelFrame(master, padx = 5, pady = 5)
 	    
 	    # Parte 3 : Direcionada para os botões 
 		part3 = LabelFrame( master )
 		
-		frames = { 'Processors':frameProcessors, 'Inter':frameInter, 'Ncores': frameNCores, 'Parmib': frameParMibench, 'Splash2': frameSplash2, 'Misc':frameMisc }
+		frames = { 'Processors':frameProcessors, 'Inter':frameInter, 'Ncores':frameNCores, 'Apps':frameApps }
 
 		
 		# Criando botões
 		## Uso para testes dos checkbox
-		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames ) )		
+		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, self.master, applications ) )		
 		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = Execute )
 		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
 		
@@ -278,11 +317,17 @@ class Window(Frame):
 
 		
 
-                
-root = Tk()
+def main():               
+	root = Tk()
 
-root.geometry('540x440')
+	root.geometry('540x440')
 
-app = Window(root)
+	app = Window(root)
 
-root.mainloop()
+	root.mainloop()
+
+if __name__ == "__main__":
+	main()
+	
+
+        
