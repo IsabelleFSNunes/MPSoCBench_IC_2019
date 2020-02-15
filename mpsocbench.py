@@ -98,8 +98,30 @@ def pwr( frameP ):
 		pwrSPARC = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor SPARC with power consumption ?')
 		
 	return pwrMIPS, pwrSPARC
-	
-	
+
+def makefile( proc , nCores, app, power, inter, currentPlatform ):
+		# Inicialização dos valores de algumas variáveis do SHELL 
+		make = '#FILE GENERATED AUTOMAGICALLY - DO NOT EDIT'
+		make = make + \
+				'\nexport SHELL := /bin/bash'  \
+				'\nexport PROCESSOR := ' + proc +  \
+				'\nexport NUMCORES := ' + nCores + \
+				'\nexport APPLICATION := ' + app + \
+				'\nexport PLATFORM := platform.' + inter + '\n'
+		
+		# Variavel do Compilador
+		cross = proc + 'newlib-elf-gcc'
+		if proc == 'ARM':
+			cross = cross.replace('elf', 'eabi')
+			
+		# Verificação do compilador
+		if cmd_exists(cross):
+			make = make + 'export CROSS := ' + cross + '\n'
+		else:
+			sys.exit('\nERROR: Cross-compiler ' + cross + ' is not in the PATH\n')
+		
+		
+		
 ## Informações sobre o MPSoCBench ( GUI )
 def about():
 	messagebox.showinfo(title = 'About', message = 'falta completar...')
@@ -124,10 +146,9 @@ def Build(frames, windowMain, listtmp):
 	
 	# Se as configurações são validas, prosseguir com a contrução  do simulador
 	if count == 0:
-		print('Pode continuar') 		# mensagem temporaria
-		
-		pwrMIPS, pwrSPARC = pwr(frames['Processors'])
 				
+		pwrMIPS, pwrSPARC = pwr(frames['Processors'])
+		
 		Matriz = validPlatforms( )
 		
 		procs = selected( frames['Processors'] )
@@ -139,15 +160,53 @@ def Build(frames, windowMain, listtmp):
 			for i in inter: 
 				for l in lin:		# applications
 					for c in col:		# num cores
+						
 						if Matriz[l][c] == False:
 							invalidCombinations = True
 						else:
-							txt = processors[p] + '.' + interconnections[i] + '.'
-							if pwrMIPS or pwrSPARC:
-								txt = txt + 'pwr.'
-							txt = txt + n_cores[c] + '.' + applications[l]
+							currentPlatform = processors[p] + '.' + interconnections[i] + '.'
 							
-							print(txt)
+							power = [pwrMIPS, pwrSPARC]
+							if pwrMIPS or pwrSPARC:
+								currentPlatform  = currentPlatform  + 'pwr.'
+							
+							currentPlatform  = currentPlatform  + n_cores[c] + '.' + applications[l]
+							
+							# padronizando a saída
+							currentPlatform  = currentPlatform.lower()
+							currentPlatform  = currentPlatform.replace(' approximately timed', '.at')
+							currentPlatform  = currentPlatform.replace(' loosely timed', '.lt')
+							
+							print(currentPlatform )
+							
+							'''
+							
+							Codigo retirado do MPSoCBench.py
+							
+							
+							 os.system("rm Makefile")
+                            # creates general Makefile
+                            
+                            f = open("Makefile", "w")
+                            f.write( makefile( processors[p], n_cores[c], applications[l], power, interconnections[i], currentPlatform  ) )
+                            f.close()
+                            
+                            # makes the platform
+                            
+                            os.system("make clean distclean all")
+                            path = "rundir/" + currentPlatform
+                            print "Creating rundir for " + path[7:] + "..."
+                            # creates rundir for each platform
+                            os.system("mkdir -p " + path)
+                            # copies it to its rundir                    
+                            os.system("make copy")
+                            os.system("make clean")
+                            # creates rundir makefile
+                            run_make(path, processors[p], n_cores[c], applications[l], interconnections[i])
+                            # creates condor task file in the rundir
+                            if condor > 0:
+                                condor_task(path, processors[p], n_cores[c], applications[l], condor, interconnections[i])
+                            '''    
 					
 		if invalidCombinations:
 			messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.")
