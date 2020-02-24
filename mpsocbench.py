@@ -2,14 +2,13 @@ from tkinter import *
 
 from tkinter import messagebox
 
-## Organização dos itens do Simulador
-## variaveis globais
+## Globals Variables 
 processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC' ]
 n_cores = ['1', '2', '4', '8', '16', '32', '64']
 interconnections = ['NoC approximately timed', 'NoC loosely timed','Router loosely timed']
 applications = ['Basicmath', 'Dijkstra', 'SHA', 'Susan-corners', 'Susan-edges', 'Susan-smoothing','Stringsearch', 'FFT', 'LU', 'Water', 'Water-spatial', 'Multi-8', 'Multi-16', 'Multi-parallel',  'Network-Automotive',  'Office-Telecomm', 'Security']
 
-## Opções válidas para cada configuração
+## Valids Combinations to Applications and Cores
 def validPlatforms( ):
 	
 	M = []
@@ -34,9 +33,11 @@ def validPlatforms( ):
 				M[i][:3] = [False] * 4
 	return M  	
 
-## Verificação das entradas
+## To verify the choices selected 
 def selected( frame ):
+
 	positions = []
+
 	for i, j in enumerate(frame):
 		if j.get() == True:
 			positions.append(i)
@@ -44,7 +45,7 @@ def selected( frame ):
 	return positions
 	
 	
-## Criação de novos objetos do Tkinter
+## Create new list to Tkinter objects
 def newObjTkinter( n ):
 
 	variables = []
@@ -56,7 +57,7 @@ def newObjTkinter( n ):
 	return variables
 
 
-## Modulo para o comando dos Botões All de cada seção
+## When the button All was clicked 
 def clickedAll( var, bt ) :
 	n = len( var )
 	
@@ -69,26 +70,34 @@ def clickedAll( var, bt ) :
 		for i in range( n ):
 			var[i].set( False )
 
+## This module is used when the botton All was clicked and some checkbox will be modified 
+def notclickedAll( bt ):
+	if bt['relief'] == SUNKEN:
+		bt.config( relief = RAISED )
 	
-## Verificação de Configurações incompletas
-def incompleteSettings(frame, name):
+## To verify the Incomplete Settings 
+def incompleteSettings(frame):
 	
 	tmp = []			# Lista temporaria para receber os onvalue dos objetos das checkboxes
-	ret = 0				# variavel para armazenar o que deve ser retornado deste modulo 
+	name = ''
 	txt = StringVar()
 	
-	# Loop para a transferencia dos valores para a lista temporaria
 	for i in frame:
-		tmp.append( i.get() ) 
+		for j in frame[i]:
+			tmp.append( j.get() ) 
 	
-	if True not in tmp:
-		ret = 1 
-		txt.set('Select at least one valid option in '+ name + '\nComplete this section and try again.')
+		if True not in tmp:
+			name +=  i + ' ;\n'
+			
+		tmp = []
+		
+	if name != '' :
+		txt.set('Select at least one valid option in:\n\n'+ name + '\nComplete this section(s) and try again.')
 		messagebox.showerror(title = 'Incomplete Settings', message = txt.get())
 
-	return ret
+	return len(name)
 
-## Modulo direcionado para a configuração power , um extra para os processadores MIPS e SPARC
+## Power Consumption for MIPS and SPARC
 def pwr( frameP ):
 	pwrMIPS, pwrSPARC = False, False
 	
@@ -99,6 +108,7 @@ def pwr( frameP ):
 		
 	return pwrMIPS, pwrSPARC
 
+## Create and Update the Makefile
 def makefile( proc , nCores, app, power, inter, currentPlatform ):
 		# Inicialização dos valores de algumas variáveis do SHELL 
 		make = '#FILE GENERATED AUTOMAGICALLY - DO NOT EDIT'
@@ -141,8 +151,7 @@ def Build(frames, windowMain, listtmp):
 	invalidCombinations = False # variavel para verificar se há combinações invalidas
 	
 	# Verificar se falta alguma informação
-	for f in frames: 
-		count += incompleteSettings(frames[f], f)
+	count = incompleteSettings(frames)
 	
 	# Se as configurações são validas, prosseguir com a contrução  do simulador
 	if count == 0:
@@ -152,9 +161,9 @@ def Build(frames, windowMain, listtmp):
 		Matriz = validPlatforms( )
 		
 		procs = selected( frames['Processors'] )
-		inter = selected( frames['Inter'] )
-		lin = selected( frames['Apps'] )
-		col = selected( frames['Ncores'] )
+		inter = selected( frames['Interconnections'] )
+		lin = selected( frames['Applications'] )
+		col = selected( frames['Cores'] )
 		
 		for p in procs:
 			for i in inter: 
@@ -209,7 +218,7 @@ def Build(frames, windowMain, listtmp):
                             '''    
 					
 		if invalidCombinations:
-			messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.")
+			messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.\n")
 		
 		
 		
@@ -245,7 +254,7 @@ class Window(Frame):
 		frameProcessors = newObjTkinter(4)		
 
 		for i, j in enumerate( processors ):
-			op1.append( Checkbutton( part11, text = j, variable = frameProcessors[i]))
+			op1.append( Checkbutton( part11, text = j, variable = frameProcessors[i], command = lambda: notclickedAll( btAll1 )))
 			op1[i].pack( side = LEFT, expand = 1 , anchor = W )	
 		
 		btAll1 = Button( part11, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( frameProcessors, btAll1 ))
@@ -263,7 +272,7 @@ class Window(Frame):
 		frameInter = newObjTkinter(3)	
 		
 		for i, j in enumerate( interconnections ):
-			op2.append( Checkbutton( part12, text = j, variable = frameInter[i] ) )
+			op2.append( Checkbutton( part12, text = j, variable = frameInter[i], command = lambda: notclickedAll( btAll2 ) ) )
 			op2[i].pack( side = LEFT, expand = 1 , anchor = W )
 		
 		btAll2 = Button( part12, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( frameInter, btAll2 ))
@@ -281,7 +290,7 @@ class Window(Frame):
 		frameNCores = newObjTkinter(7)
 		
 		for i, j in enumerate( n_cores ):
-			op3.append( Checkbutton( part13, text = j, variable = frameNCores[i] ) ) 
+			op3.append( Checkbutton( part13, text = j, variable = frameNCores[i], command = lambda: notclickedAll( btAll3 ) ) ) 
 			op3[i].pack( side = LEFT, expand = 1 , anchor = W )
 		
 		btAll3 = Button( part13, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( frameNCores, btAll3 ))
@@ -296,7 +305,7 @@ class Window(Frame):
 		part143 = LabelFrame( part14, text = 'Miscellaneous' )
 
 		## Applications será dividido em 3 partes
-		separador = 0
+		splitThisFrame = 0
 		
 		# Inicialização de algumas variaveis que serão usadas nesta parte 1.4
 		frameApps = []
@@ -321,23 +330,23 @@ class Window(Frame):
 				
 		for i, j in enumerate( applications ):
 			if j == 'FFT' or j == 'Multi-8':
-				separador+= 1	
+				splitThisFrame += 1	
 				
 			# ParMibench
-			if separador == 0:
-				op41.append( Checkbutton( part141, text = j, variable = frameParMibench[i] ) )
+			if splitThisFrame  == 0:
+				op41.append( Checkbutton( part141, text = j, variable = frameParMibench[i], command = lambda: notclickedAll( btAll41 ) ) )
 				op41[i].pack( side = TOP, anchor = W  )
 				part141.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 		
 			# SPLASH2
-			if separador == 1:
-				op42.append( Checkbutton( part142, text = j, variable = frameSplash2[i-7] ) )
+			if splitThisFrame  == 1:
+				op42.append( Checkbutton( part142, text = j, variable = frameSplash2[i-7], command = lambda: notclickedAll( btAll42 ) ) )
 				op42[i-7].pack( side = TOP, anchor = W )
 				part142.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 			    
 			# Miscellaneous   
-			if separador == 2:
-				op43.append( Checkbutton( part143, text = j, variable = frameMisc[i-11] ) )
+			if splitThisFrame  == 2:
+				op43.append( Checkbutton( part143, text = j, variable = frameMisc[i-11], command = lambda: notclickedAll( btAll43 ) ) )
 				op43[i-11].pack( side = TOP, anchor = W )
 				part143.pack( side = LEFT, anchor = N, fill = BOTH, expand = 1 )
 	
@@ -364,7 +373,7 @@ class Window(Frame):
 		part21 = LabelFrame( part2, text = 'Builded', padx = 5, pady = 5 )
 		part21.pack( side = TOP, fill = BOTH, expand = 1 ) 
 		listtmp = []
-		print('antes', listtmp)
+			## print('antes', listtmp)
 		# Executed
 		part22 = LabelFrame( part2, text = 'Executed', padx = 5, pady = 5 )
 		part22.pack( side = TOP, fill = BOTH, expand = 1 ) 
@@ -376,14 +385,14 @@ class Window(Frame):
 		part3 = LabelFrame( part1 )
 		part3.config( relief = FLAT )
 		
-		frames = { 'Processors':frameProcessors, 'Inter':frameInter, 'Ncores':frameNCores, 'Apps':frameApps }
+		frames = { 'Processors':frameProcessors, 'Interconnections':frameInter, 'Cores':frameNCores, 'Applications':frameApps }
 		
 		# Criando botões
 		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, self.master, listtmp) )		
 		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = Execute )
 		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
 		
-		print('depois dos botões serem executados', listtmp)
+			## print('depois dos botões serem executados', listtmp)
 		
 		bt1.pack( side = LEFT, fill = X, expand = 1 )
 		bt2.pack( side = LEFT, fill = X, expand = 1 )
