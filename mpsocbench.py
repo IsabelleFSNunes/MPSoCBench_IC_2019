@@ -2,6 +2,8 @@ from tkinter import *
 
 from tkinter import messagebox
 
+from os import *
+
 ## Globals Variables 
 processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC' ]
 n_cores = ['1', '2', '4', '8', '16', '32', '64']
@@ -110,27 +112,59 @@ def pwr( frameP ):
 
 ## Create and Update the Makefile
 def makefile( proc , nCores, app, power, inter, currentPlatform ):
-		# Inicialização dos valores de algumas variáveis do SHELL 
-		make = '#FILE GENERATED AUTOMAGICALLY - DO NOT EDIT'
-		make = make + \
-				'\nexport SHELL := /bin/bash'  \
-				'\nexport PROCESSOR := ' + proc +  \
-				'\nexport NUMCORES := ' + nCores + \
-				'\nexport APPLICATION := ' + app + \
-				'\nexport PLATFORM := platform.' + inter + '\n'
+	# Inicialização dos valores de algumas variáveis do SHELL 
+	make = '#FILE GENERATED AUTOMAGICALLY - DO NOT EDIT'
+	make = make + \
+			'\nexport SHELL := /bin/bash'  \
+			'\nexport PROCESSOR := ' + proc +  \
+			'\nexport NUMCORES := ' + nCores + \
+			'\nexport APPLICATION := ' + app + \
+			'\nexport PLATFORM := platform.' + inter + '\n'
+	
+	# Variavel do Compilador
+	cross = proc + 'newlib-elf-gcc'
+	if proc == 'ARM':
+		cross = cross.replace('elf', 'eabi')
 		
-		# Variavel do Compilador
-		cross = proc + 'newlib-elf-gcc'
-		if proc == 'ARM':
-			cross = cross.replace('elf', 'eabi')
-			
-		# Verificação do compilador
-		if cmd_exists(cross):
-			make = make + 'export CROSS := ' + cross + '\n'
-		else:
-			sys.exit('\nERROR: Cross-compiler ' + cross + ' is not in the PATH\n')
+	# Verificação do compilador
+	if cmd_exists(cross):
+		make = make + 'export CROSS := ' + cross + '\n'
+	else:
+		sys.exit('\nERROR: Cross-compiler ' + cross + ' is not in the PATH\n')
+	
+	# Verificação power
+	pwrFlag = ''
+	make = make + 'export POWER_SIM_FLAG :=' 
+	if power:
+		make = make + '-DPOWER_SIM=\\\"\\\"'
+		pwrFlag = ' -pw'
 		
+	make = make + '\n'
+	make = make + 'export ACSIM_FLAGS := -abi -ndc' + pwrFlag + '\n'
+	
+	# Verificação da interconecção
+	if inter == 'noc.at':
+		make = make + 'export WAIT_TRANSPORT_FLAG := -DWAIT_TRANSPORT\nexport TRANSPORT := nonblock\n'
+	else:
+		make = make + 'export WAIT_TRANSPORT_FLAG := \nexport TRANSPORT := block\n'
 		
+	make = make + 'export MEM_SIZE_DEFAULT := -DMEM_SIZE=536870912\n'
+	make = make + 'export RUNDIRNAME := ' + currentplatform + '\n'
+	
+	# verificar o proc
+	make = make + 'export ENDIANESS :=' 
+	if proc != 'ARM':
+		make = make + '-DAC_GUEST_BIG_ENDIAN'
+	make = make + '\n'	
+	
+	# Finalizar o make
+	make = make + 'ifeq ($(PROCESSOR),ARM)\nexport CFLAGS_AUX := -DPROCARM\nendif\n'
+	make = make + 'ifeq ($(PROCESSOR),MIPS)\nexport CFLAGS_AUX := -DPROCMIPS\nendif\n'
+	make = make + 'ifeq ($(PROCESSOR),PowerPC)\nexport CFLAGS_AUX := -DPROCPOWERPC\nendif\n'
+	make = make + 'ifeq ($(PROCESSOR),SPARC)\nexport CFLAGS_AUX := -DPROCSPARC\nendif\n'
+	make = make + 'include Makefile.rules\n'
+	
+	return make
 		
 ## Informações sobre o MPSoCBench ( GUI )
 def about():
@@ -175,10 +209,12 @@ def Build(frames, windowMain, listtmp):
 						else:
 							currentPlatform = processors[p] + '.' + interconnections[i] + '.'
 							
-							power = [pwrMIPS, pwrSPARC]
-							if pwrMIPS or pwrSPARC:
-								currentPlatform  = currentPlatform  + 'pwr.'
+							power = False
 							
+							if (p == MIPS and pwrMIPS) or (p == SPARC and pwrSPARC) :
+								currentPlatform  = currentPlatform  + 'pwr.'
+								power = True
+								
 							currentPlatform  = currentPlatform  + n_cores[c] + '.' + applications[l]
 							
 							# padronizando a saída
