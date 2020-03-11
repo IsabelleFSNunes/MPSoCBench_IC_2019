@@ -2,7 +2,9 @@ from tkinter import *
 
 from tkinter import messagebox
 
-from os import *
+import os
+import sys
+import subprocess
 
 ## Globals Variables 
 processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC' ]
@@ -110,6 +112,18 @@ def pwr( frameP ):
 		
 	return pwrMIPS, pwrSPARC
 
+## 
+def cmd_exists(cmd):
+    return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+
+## rundir Makefile creator
+# run_make(path, processors[p], n_cores[c], applications[l], interconnections[i])
+def run_make(path, proc, nproc, app, intercon):
+    make = "run:\n\t./platform." + intercon + ".x " + app + "." + proc + ".x " + nproc +"\n"
+    f = open(path + "/Makefile", "w")
+    f.write(make)
+    f.close()
+
 ## Create and Update the Makefile
 def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	# Inicialização dos valores de algumas variáveis do SHELL 
@@ -122,7 +136,7 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 			'\nexport PLATFORM := platform.' + inter + '\n'
 	
 	# Variavel do Compilador
-	cross = proc + 'newlib-elf-gcc'
+	cross = proc.lower() + '-newlib-elf-gcc'
 	if proc == 'ARM':
 		cross = cross.replace('elf', 'eabi')
 		
@@ -149,7 +163,7 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 		make = make + 'export WAIT_TRANSPORT_FLAG := \nexport TRANSPORT := block\n'
 		
 	make = make + 'export MEM_SIZE_DEFAULT := -DMEM_SIZE=536870912\n'
-	make = make + 'export RUNDIRNAME := ' + currentplatform + '\n'
+	make = make + 'export RUNDIRNAME := ' + currentPlatform+ '\n'
 	
 	# verificar o proc
 	make = make + 'export ENDIANESS :=' 
@@ -200,18 +214,24 @@ def Build(frames, windowMain, listtmp):
 		col = selected( frames['Cores'] )
 		
 		for p in procs:
-			for i in inter: 
+			for i in inter:
+				if i == 0:
+					i = 'noc.at'
+				elif i == 1:
+					i = 'noc.lt'
+				elif i == 2:
+					i = 'router.lt'
+				
 				for l in lin:		# applications
 					for c in col:		# num cores
-						
 						if Matriz[l][c] == False:
 							invalidCombinations = True
 						else:
-							currentPlatform = processors[p] + '.' + interconnections[i] + '.'
+							currentPlatform = processors[p] + '.' + i + '.'
 							
 							power = False
 							
-							if (p == MIPS and pwrMIPS) or (p == SPARC and pwrSPARC) :
+							if (p == 'MIPS' and pwrMIPS) or (p == 'SPARC' and pwrSPARC) :
 								currentPlatform  = currentPlatform  + 'pwr.'
 								power = True
 								
@@ -219,39 +239,43 @@ def Build(frames, windowMain, listtmp):
 							
 							# padronizando a saída
 							currentPlatform  = currentPlatform.lower()
-							currentPlatform  = currentPlatform.replace(' approximately timed', '.at')
-							currentPlatform  = currentPlatform.replace(' loosely timed', '.lt')
+							#currentPlatform  = currentPlatform.replace( ' approximately timed', '.at' )
+							#currentPlatform  = currentPlatform.replace( ' loosely timed', '.lt' )
 							
-							print(currentPlatform )
+							print( currentPlatform )
 							
-							'''
+							os.system( 'rm Makefile' )
 							
-							Codigo retirado do MPSoCBench.py
+							# creates general Makefile 
 							
+							f = open( 'Makefile', 'w' )		
+							f.write( makefile( processors[p].lower(), n_cores[c], applications[l].lower(), power, i, currentPlatform ) )
 							
-							 os.system("rm Makefile")
-                            # creates general Makefile
-                            
-                            f = open("Makefile", "w")
-                            f.write( makefile( processors[p], n_cores[c], applications[l], power, interconnections[i], currentPlatform  ) )
-                            f.close()
-                            
-                            # makes the platform
-                            
-                            os.system("make clean distclean all")
-                            path = "rundir/" + currentPlatform
-                            print "Creating rundir for " + path[7:] + "..."
-                            # creates rundir for each platform
-                            os.system("mkdir -p " + path)
-                            # copies it to its rundir                    
-                            os.system("make copy")
-                            os.system("make clean")
-                            # creates rundir makefile
-                            run_make(path, processors[p], n_cores[c], applications[l], interconnections[i])
-                            # creates condor task file in the rundir
-                            if condor > 0:
-                                condor_task(path, processors[p], n_cores[c], applications[l], condor, interconnections[i])
-                            '''    
+							f.close()
+							
+							# make the platform
+							os.system( 'make clean distclean all' )
+							
+							os.system('rm Makefile')
+							# creates general Makefile
+							
+							f = open('Makefile', 'w')
+							f.write( makefile( processors[p].lower(), n_cores[c], applications[l].lower(), power, inter, currentPlatform  ) )
+							f.close()
+							
+							# makes the platform
+							
+							os.system('make clean distclean all')
+							path = 'rundir/' + currentPlatform056
+							print('Creating rundir for' + path[7:] + '...')
+							# creates rundir for each platform
+							os.system('mkdir -p ' + path)
+							# copies it to its rundir					
+							os.system('make copy')
+							os.system('make clean')
+							# creates rundir makefile
+							run_make(path, processors[p].lower(), n_cores[c], applications[l].lower(), i)
+							# creates condor task file in the rundir           
 					
 		if invalidCombinations:
 			messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.\n")
