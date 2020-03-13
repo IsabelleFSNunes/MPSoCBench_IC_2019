@@ -132,7 +132,7 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 			'\nexport SHELL := /bin/bash'  \
 			'\nexport PROCESSOR := ' + proc +  \
 			'\nexport NUMCORES := ' + nCores + \
-			'\nexport APPLICATION := ' + app + \
+			'\nexport SOFTWARE:= ' + app + \
 			'\nexport PLATFORM := platform.' + inter + '\n'
 	
 	# Variavel do Compilador
@@ -180,6 +180,30 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	
 	return make
 		
+# cleans up the dir structure and removes the rundir
+# in order to commit to version control
+def clean():
+    right_files = []
+    for root, dirs, files in os.walk(os.getcwd()):
+        if '.svn' in dirs:
+            dirs.remove('.svn')
+        for f in files:
+            if f[-1] == '~':
+                os.remove(os.path.join(root, f))
+            elif f[-2] == '.' and (f[-1] == 'x' or f[-1] == 'o') or f[-1] == 'a':
+                os.remove(os.path.join(root, f))
+    os.system("rm -rf rundir/")
+
+# calls Makefile rule distclean for each processor
+def distclean():
+    bench_path = os.getcwd()
+    for i in procs:
+        os.chdir(bench_path + "/processors/" + i)
+        if os.path.isfile ( "Makefile" ):
+            os.system("make distclean")
+    os.chdir(bench_path)
+
+
 ## Informações sobre o MPSoCBench ( GUI )
 def about():
 	messagebox.showinfo(title = 'About', message = 'falta completar...')
@@ -267,7 +291,7 @@ def Build(frames, windowMain, listtmp):
 							
 							os.system('make clean distclean all')
 							path = 'rundir/' + currentPlatform
-							print('Creating rundir for ' + path[7:] + '...')
+							print('Creating rundir for 0 ' + path[7:] + '...')
 							# creates rundir for each platform
 							os.system('mkdir -p ' + path)
 							# copies it to its rundir					
