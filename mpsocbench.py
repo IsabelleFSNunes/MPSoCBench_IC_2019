@@ -136,8 +136,8 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 			'\nexport PLATFORM := platform.' + inter + '\n'
 	
 	# Variavel do Compilador
-	cross = proc.lower() + '-newlib-elf-gcc'
-	if proc == 'ARM':
+	cross = proc + '-newlib-elf-gcc'
+	if proc == 'arm':
 		cross = cross.replace('elf', 'eabi')
 		
 	# Verificação do compilador
@@ -167,7 +167,7 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	
 	# verificar o proc
 	make = make + 'export ENDIANESS :=' 
-	if proc != 'ARM':
+	if proc != 'arm':
 		make = make + '-DAC_GUEST_BIG_ENDIAN'
 	make = make + '\n'	
 	
@@ -260,14 +260,14 @@ def Build(frames, windowMain, listtmp):
 							# creates general Makefile
 							
 							f = open('Makefile', 'w')
-							f.write( makefile( processors[p].lower(), n_cores[c], applications[l].lower(), power, inter, currentPlatform  ) )
+							f.write( makefile( processors[p].lower(), n_cores[c], applications[l].lower(), power, i, currentPlatform  ) )
 							f.close()
 							
 							# makes the platform
 							
 							os.system('make clean distclean all')
-							path = 'rundir/' + currentPlatform056
-							print('Creating rundir for' + path[7:] + '...')
+							path = 'rundir/' + currentPlatform
+							print('Creating rundir for ' + path[7:] + '...')
 							# creates rundir for each platform
 							os.system('mkdir -p ' + path)
 							# copies it to its rundir					
