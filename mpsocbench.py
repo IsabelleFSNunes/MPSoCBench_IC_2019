@@ -12,6 +12,9 @@ n_cores = ['1', '2', '4', '8', '16', '32', '64']
 interconnections = ['NoC approximately timed', 'NoC loosely timed','Router loosely timed']
 applications = ['Basicmath', 'Dijkstra', 'SHA', 'Susan-corners', 'Susan-edges', 'Susan-smoothing','Stringsearch', 'FFT', 'LU', 'Water', 'Water-spatial', 'Multi-8', 'Multi-16', 'Multi-parallel',  'Network-Automotive',  'Office-Telecomm', 'Security']
 
+applications2 = ['basicmath', 'dijkstra', 'sha','susancorners', 'susanedges', 'susansmoothing', 'stringsearch', 'fft', 'lu', 'water', 'water_spatial' ,  'multi_8', 'multi_16','multi_parallel',  'multi_network_automotive','multi_office_telecomm', 'multi_security']
+
+
 ## Valids Combinations to Applications and Cores
 def validPlatforms( ):
 	
@@ -112,6 +115,29 @@ def pwr( frameP ):
 		
 	return pwrMIPS, pwrSPARC
 
+# in order to commit to version control
+def clean():
+    right_files = []
+    for root, dirs, files in os.walk(os.getcwd()):
+        if '.svn' in dirs:
+            dirs.remove('.svn')
+        for f in files:
+            if f[-1] == '~':
+                os.remove(os.path.join(root, f))
+            elif f[-2] == '.' and (f[-1] == 'x' or f[-1] == 'o') or f[-1] == 'a':
+                os.remove(os.path.join(root, f))
+    os.system('rm -rf rundir/')
+
+# calls Makefile rule distclean for each processor
+def distclean():
+    bench_path = os.getcwd()
+    for i in procs:
+        os.chdir(bench_path + '/processors/' + i)
+        if os.path.isfile ( 'Makefile' ):
+            os.system('make distclean')
+    os.chdir(bench_path)
+
+
 ## 
 def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
@@ -131,8 +157,8 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	make = make + \
 			'\nexport SHELL := /bin/bash'  \
 			'\nexport PROCESSOR := ' + proc +  \
-			'\nexport NUMCORES := ' + nCores + \
-			'\nexport SOFTWARE:= ' + app + \
+			'\nexport NUMPROCESSORS := ' + nCores + \
+			'\nexport SOFTWARE := ' + app + \
 			'\nexport PLATFORM := platform.' + inter + '\n'
 	
 	# Variavel do Compilador
@@ -180,30 +206,6 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	
 	return make
 		
-# cleans up the dir structure and removes the rundir
-# in order to commit to version control
-def clean():
-    right_files = []
-    for root, dirs, files in os.walk(os.getcwd()):
-        if '.svn' in dirs:
-            dirs.remove('.svn')
-        for f in files:
-            if f[-1] == '~':
-                os.remove(os.path.join(root, f))
-            elif f[-2] == '.' and (f[-1] == 'x' or f[-1] == 'o') or f[-1] == 'a':
-                os.remove(os.path.join(root, f))
-    os.system("rm -rf rundir/")
-
-# calls Makefile rule distclean for each processor
-def distclean():
-    bench_path = os.getcwd()
-    for i in procs:
-        os.chdir(bench_path + "/processors/" + i)
-        if os.path.isfile ( "Makefile" ):
-            os.system("make distclean")
-    os.chdir(bench_path)
-
-
 ## Informações sobre o MPSoCBench ( GUI )
 def about():
 	messagebox.showinfo(title = 'About', message = 'falta completar...')
@@ -217,7 +219,7 @@ Funcoes temporarias para testar os botoes
 def btExit():
 	exit()
 
-def Build(frames, windowMain, listtmp):
+def Build(frames, windowMain):
 	
 	count = 0			# variavel para fazer a contagem das seções incompletas
 	invalidCombinations = False # variavel para verificar se há combinações invalidas
@@ -259,12 +261,10 @@ def Build(frames, windowMain, listtmp):
 								currentPlatform  = currentPlatform  + 'pwr.'
 								power = True
 								
-							currentPlatform  = currentPlatform  + n_cores[c] + '.' + applications[l]
+							currentPlatform  = currentPlatform  + n_cores[c] + '.' + applications2[l]
 							
 							# padronizando a saída
 							currentPlatform  = currentPlatform.lower()
-							#currentPlatform  = currentPlatform.replace( ' approximately timed', '.at' )
-							#currentPlatform  = currentPlatform.replace( ' loosely timed', '.lt' )
 							
 							print( currentPlatform )
 							
@@ -273,23 +273,12 @@ def Build(frames, windowMain, listtmp):
 							# creates general Makefile 
 							
 							f = open( 'Makefile', 'w' )		
-							f.write( makefile( processors[p].lower(), n_cores[c], applications[l].lower(), power, i, currentPlatform ) )
+							f.write( makefile( processors[p].lower(), n_cores[c], applications2[l], power, i, currentPlatform ) )
 							
 							f.close()
 							
-							# make the platform
-							os.system( 'make clean distclean all' )
+							os.system("make clean distclean all")
 							
-							os.system('rm Makefile')
-							# creates general Makefile
-							
-							f = open('Makefile', 'w')
-							f.write( makefile( processors[p].lower(), n_cores[c], applications[l].lower(), power, i, currentPlatform  ) )
-							f.close()
-							
-							# makes the platform
-							
-							os.system('make clean distclean all')
 							path = 'rundir/' + currentPlatform
 							print('Creating rundir for 0 ' + path[7:] + '...')
 							# creates rundir for each platform
@@ -298,17 +287,48 @@ def Build(frames, windowMain, listtmp):
 							os.system('make copy')
 							os.system('make clean')
 							# creates rundir makefile
-							run_make(path, processors[p].lower(), n_cores[c], applications[l].lower(), i)
-							# creates condor task file in the rundir           
+							run_make(path, processors[p].lower(), n_cores[c], applications2[l], i)        
 					
 		if invalidCombinations:
 			messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.\n")
+				
 		
+def Execute( frame, listRundir ):
+	
+	builded_pos = selected( frame )
+	
+	for b in builded_pos:
 		
+		rundirPath = 'rundir/'+ listRundir[b]
+		os.chdir(rundirPath)
+		os.system('make run')
+		os.system('make -f Makefile.check check')
+		os.chdir('../..')
+	
+
+class scrollAbleFrame(Frame):
+	def __init__(self, master, **kwargs):
+		Frame.__init__(self, master, **kwargs)
+
+		# create a canvas object and a vertical scrollbar for scrolling it
+		self.scroll = Scrollbar(self, orient = VERTICAL)
+		self.scroll.pack(side = RIGHT, fill = Y, expand = 0 )
+		self.canvas = Canvas(self, yscrollcommand = self.scroll.set)
+		self.canvas.config(relief = SUNKEN)
+		self.canvas.pack( side = LEFT, fill = BOTH, expand = 1)
+		self.scroll.config( command = self.canvas.yview )
 		
-		
-def Execute():
-	exit()
+
+		# create a frame inside the canvas which will be scrolled with it
+		self.interior = Frame(self.canvas, **kwargs)
+		self.canvas.create_window(0, 0, window=self.interior, anchor = NW)
+
+		self.bind('<Configure>', self.set_scrollregion)
+
+
+	def set_scrollregion(self, event = None):
+		self.canvas.configure(scrollregion = self.canvas.bbox('all'))
+
 
 # Classe destinada a interface grafica
 
@@ -455,12 +475,37 @@ class Window(Frame):
 		
 		# Builded
 		part21 = LabelFrame( part2, text = 'Builded', padx = 5, pady = 5 )
-		part21.pack( side = TOP, fill = BOTH, expand = 1 ) 
-		listtmp = []
-			## print('antes', listtmp)
+			
+		op5 = []
+		
+		listbuilded = scrollAbleFrame( part21.master )
+				
+		rundirPath = []
+		frameBuilded = [] 
+			
+		
+		rundirPath = os.listdir( os.getcwd() + '/rundir/' )	
+		frameBuilded = newObjTkinter( len( rundirPath ) )
+	
+		for i, j in enumerate( rundirPath ):
+				op5.append( Checkbutton( listbuilded.interior, text = j, variable = frameBuilded[i], command = lambda: notclickedAll( btAll5 ) ) )
+				op5[i].pack( side = TOP, anchor = W )
+	
+
+		btAll5 = Button( listbuilded.interior, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( frameBuilded, btAll5 ) )
+		btAll5.pack( side = LEFT, fill = X, expand = 1)
+		
+		
+		listbuilded.pack( fill = BOTH, expand = 1 )
+		
+			
+		## part21.pack( side = TOP, fill = BOTH, expand = 1 ) 
+		
+		
 		# Executed
-		part22 = LabelFrame( part2, text = 'Executed', padx = 5, pady = 5 )
-		part22.pack( side = TOP, fill = BOTH, expand = 1 ) 
+		##part22 = LabelFrame( part2, text = 'Executed', padx = 5, pady = 5 )
+		##part22.pack( side = TOP, fill = BOTH, expand = 1 ) 
+		
 		
 		part2.config( relief = FLAT )
 		part2.pack( side = LEFT, fill = BOTH, expand = 1, anchor = E )
@@ -472,8 +517,8 @@ class Window(Frame):
 		frames = { 'Processors':frameProcessors, 'Interconnections':frameInter, 'Cores':frameNCores, 'Applications':frameApps }
 		
 		# Criando botões
-		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, self.master, listtmp) )		
-		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = Execute )
+		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, self.master ) )		
+		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = lambda: Execute (frameBuilded, rundirPath) )
 		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
 		
 			## print('depois dos botões serem executados', listtmp)
@@ -485,7 +530,9 @@ class Window(Frame):
 		part3.pack( fill = X, expand = 1 )
 
 		
-def main():               
+def main():
+
+	             
 	root = Tk()
 
 	root.geometry('1040x480')
