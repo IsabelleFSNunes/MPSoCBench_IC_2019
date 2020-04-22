@@ -10,8 +10,11 @@ import subprocess
 processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC' ]
 n_cores = ['1', '2', '4', '8', '16', '32', '64']
 interconnections = ['NoC approximately timed', 'NoC loosely timed','Router loosely timed']
+
+# names for appear in Interface
 applications = ['Basicmath', 'Dijkstra', 'SHA', 'Susan-corners', 'Susan-edges', 'Susan-smoothing','Stringsearch', 'FFT', 'LU', 'Water', 'Water-spatial', 'Multi-8', 'Multi-16', 'Multi-parallel',  'Network-Automotive',  'Office-Telecomm', 'Security']
 
+# names for connect with other codes
 applications2 = ['basicmath', 'dijkstra', 'sha','susancorners', 'susanedges', 'susansmoothing', 'stringsearch', 'fft', 'lu', 'water', 'water_spatial' ,  'multi_8', 'multi_16','multi_parallel',  'multi_network_automotive','multi_office_telecomm', 'multi_security']
 
 
@@ -40,10 +43,11 @@ def validPlatforms( ):
 				M[i][:3] = [False] * 4
 	return M  	
 
-## To verify the choices selected 
+## To verify the choices selected
 def selected( frame ):
 
-	positions = []
+	# this variable will recieve the positions selected 
+	positions = []		
 
 	for i, j in enumerate(frame):
 		if j.get() == True:
@@ -53,14 +57,14 @@ def selected( frame ):
 	
 	
 ## Create new list to Tkinter objects
-def newObjTkinter( n ):
-
+def newObjTkinter(n):
+	# this variable will receive a list the tkinter objects
 	variables = []
-	
+
 	for i in range( n ):
 		tmp = BooleanVar()
 		variables.append( tmp )
-		
+	
 	return variables
 
 
@@ -68,10 +72,12 @@ def newObjTkinter( n ):
 def clickedAll( var, bt ) :
 	n = len( var )
 	
+	# While 'All' stay clicked, the whole section are selected with True
 	if bt['relief'] == RAISED:
 		bt.config( relief = SUNKEN )
 		for i in range( n ):
 			var[i].set( True )
+	# When some checkbox it is modified, the button 'All' will be diclicked
 	else:
 		bt.config( relief = RAISED )
 		for i in range( n ):
@@ -108,9 +114,9 @@ def incompleteSettings(frame):
 def pwr( frameP ):
 	pwrMIPS, pwrSPARC = False, False
 	
-	if frameP[1].get() == True:			# posição do processador MIPS na lista 
+	if frameP[1].get() == True:			# Position's MIPS in list
 		pwrMIPS = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor MIPS with power consumption ?')
-	if frameP[3].get() == True:			# posição do processador SPARC na lista 
+	if frameP[3].get() == True:			# Position's SPARC in list 
 		pwrSPARC = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor SPARC with power consumption ?')
 		
 	return pwrMIPS, pwrSPARC
@@ -143,7 +149,6 @@ def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 ## rundir Makefile creator
-# run_make(path, processors[p], n_cores[c], applications[l], interconnections[i])
 def run_make(path, proc, nproc, app, intercon):
     make = "run:\n\t./platform." + intercon + ".x " + app + "." + proc + ".x " + nproc +"\n"
     f = open(path + "/Makefile", "w")
@@ -152,7 +157,7 @@ def run_make(path, proc, nproc, app, intercon):
 
 ## Create and Update the Makefile
 def makefile( proc , nCores, app, power, inter, currentPlatform ):
-	# Inicialização dos valores de algumas variáveis do SHELL 
+	# Inicializing some variable of the Shell 
 	make = '#FILE GENERATED AUTOMAGICALLY - DO NOT EDIT'
 	make = make + \
 			'\nexport SHELL := /bin/bash'  \
@@ -161,28 +166,28 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 			'\nexport SOFTWARE := ' + app + \
 			'\nexport PLATFORM := platform.' + inter + '\n'
 	
-	# Variavel do Compilador
+	# Variable for the compiler 
 	cross = proc + '-newlib-elf-gcc'
 	if proc == 'arm':
 		cross = cross.replace('elf', 'eabi')
 		
-	# Verificação do compilador
+	# Verifying the compiler 
 	if cmd_exists(cross):
 		make = make + 'export CROSS := ' + cross + '\n'
 	else:
 		sys.exit('\nERROR: Cross-compiler ' + cross + ' is not in the PATH\n')
 	
-	# Verificação power
+	# To verify the flag power comsumption
 	pwrFlag = ''
 	make = make + 'export POWER_SIM_FLAG :=' 
 	if power:
 		make = make + '-DPOWER_SIM=\\\"\\\"'
 		pwrFlag = ' -pw'
-		
+
 	make = make + '\n'
 	make = make + 'export ACSIM_FLAGS := -abi -ndc' + pwrFlag + '\n'
 	
-	# Verificação da interconecção
+	# To Verify the interconnection
 	if inter == 'noc.at':
 		make = make + 'export WAIT_TRANSPORT_FLAG := -DWAIT_TRANSPORT\nexport TRANSPORT := nonblock\n'
 	else:
@@ -191,13 +196,13 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	make = make + 'export MEM_SIZE_DEFAULT := -DMEM_SIZE=536870912\n'
 	make = make + 'export RUNDIRNAME := ' + currentPlatform+ '\n'
 	
-	# verificar o proc
+	# To verify the processor
 	make = make + 'export ENDIANESS :=' 
 	if proc != 'arm':
 		make = make + '-DAC_GUEST_BIG_ENDIAN'
 	make = make + '\n'	
 	
-	# Finalizar o make
+	# Finalizing the make
 	make = make + 'ifeq ($(PROCESSOR),ARM)\nexport CFLAGS_AUX := -DPROCARM\nendif\n'
 	make = make + 'ifeq ($(PROCESSOR),MIPS)\nexport CFLAGS_AUX := -DPROCMIPS\nendif\n'
 	make = make + 'ifeq ($(PROCESSOR),PowerPC)\nexport CFLAGS_AUX := -DPROCPOWERPC\nendif\n'
@@ -206,7 +211,7 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	
 	return make
 		
-## Informações sobre o MPSoCBench ( GUI )
+## Informations about the MPSoCBench ( GUI )
 def about():
 	messagebox.showinfo(title = 'About', message = 'falta completar...')
 
@@ -221,13 +226,13 @@ def btExit():
 
 def Build(frames, windowMain):
 	
-	count = 0			# variavel para fazer a contagem das seções incompletas
-	invalidCombinations = False # variavel para verificar se há combinações invalidas
+	count = 0					# variable to do a count of the sections incompetes
+	invalidCombinations = False # variable for to verify if exist valids combinations 
 	
-	# Verificar se falta alguma informação
+	# To verify if miss something section
 	count = incompleteSettings(frames)
 	
-	# Se as configurações são validas, prosseguir com a contrução  do simulador
+	# If the settings are complete, proceed the build this platform
 	if count == 0:
 				
 		pwrMIPS, pwrSPARC = pwr(frames['Processors'])
@@ -263,10 +268,10 @@ def Build(frames, windowMain):
 								
 							currentPlatform  = currentPlatform  + n_cores[c] + '.' + applications2[l]
 							
-							# padronizando a saída
+							# straighten the directory's name
 							currentPlatform  = currentPlatform.lower()
 							
-							print( currentPlatform )
+							print( currentPlatform )	# temporary 
 							
 							os.system( 'rm Makefile' )
 							
@@ -288,11 +293,44 @@ def Build(frames, windowMain):
 							os.system('make clean')
 							# creates rundir makefile
 							run_make(path, processors[p].lower(), n_cores[c], applications2[l], i)        
-					
+							
+							
+							
 		if invalidCombinations:
 			messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.\n")
-				
+			
+#---------------------------------------------------------------------------------------------------------------------------		
+def updateBuilded(part2):
+
+	
+	for item in part2.winfo_children():
+		item.destroy()
+	
+	part21 = Frame(part2)
 		
+	op5 = []
+	framebuilded = []
+	
+	rundirPath = os.listdir( os.getcwd() + '/rundir/' )	
+	rundirPath.sort()
+	frameBuilded = newObjTkinter( len( rundirPath ) )
+	
+	listbuilded = scrollAbleFrame(part21)
+	
+	for i, j in enumerate( rundirPath ):
+			op5.append( Checkbutton( listbuilded.interior, text = j, variable = frameBuilded[i], command = lambda: notclickedAll( btAll5 ) ) )
+			op5[i].pack( side = TOP, anchor = W )
+	op5.clear()
+
+	btAll5 = Button( listbuilded.interior, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( frameBuilded, btAll5 ) )
+	btAll5.pack( side = LEFT, fill = X, expand = 1)
+
+	listbuilded.pack(fill = Y, expand = 1)
+	
+	part21.pack(fill = Y, expand = 1)
+
+#---------------------------------------------------------------------------------------------------------------------------			
+	
 def Execute( frame, listRundir ):
 	
 	builded_pos = selected( frame )
@@ -304,7 +342,6 @@ def Execute( frame, listRundir ):
 		os.system('make run')
 		os.system('make -f Makefile.check check')
 		os.chdir('../..')
-	
 
 class scrollAbleFrame(Frame):
 	def __init__(self, master, **kwargs):
@@ -332,22 +369,22 @@ class scrollAbleFrame(Frame):
 
 # Classe destinada a interface grafica
 
-class Window(Frame):
+class Window(Frame):	
 	def __init__( self, master=None ):
 		Frame.__init__( self, master )
 		master.title('MPSoCBench')
 		
-		# Menu inicial
+		# Menu (Initial)
 		menubar = Menu( self.master, bg = '#A9A9A9' ) 		
 		menubar.add_command( label = 'About', command = about )
 		menubar.add_command( label = 'Help', command = helpUse )
 		self.master.config( menu = menubar ) 
 
 		
-		# Parte 1 : Direcionada para as opções de Configurações
+		# Parte 1 : Settings options 
 		part1 = LabelFrame( master, text = 'SETTINGS', font = 'bold', padx = 5, pady = 5 )
 			
-		## Parte 1.1. : Processadores
+		## Parte 1.1. : Processors
 		part11 = LabelFrame( part1, text = 'Processors', font = 'bold', padx = 5, pady = 5 )
 		part11.pack( side = TOP, fill = X, expand = 1 )
 		
@@ -471,36 +508,12 @@ class Window(Frame):
 		part1.pack( side = LEFT, padx = 5, pady = 5, anchor = W )
 	    	    
 	    # Parte 2 : Direcionada para a lista de Configurações já escolhidas
-		part2 = LabelFrame( master, padx = 5, pady = 5 )
+		part2 = Frame( master, padx = 5, pady = 5 )
 		
 		# Builded
-		part21 = LabelFrame( part2, text = 'Builded', padx = 5, pady = 5 )
-			
-		op5 = []
 		
-		listbuilded = scrollAbleFrame( part21.master )
-				
-		rundirPath = []
-		frameBuilded = [] 
-			
-		
-		rundirPath = os.listdir( os.getcwd() + '/rundir/' )	
-		frameBuilded = newObjTkinter( len( rundirPath ) )
-	
-		for i, j in enumerate( rundirPath ):
-				op5.append( Checkbutton( listbuilded.interior, text = j, variable = frameBuilded[i], command = lambda: notclickedAll( btAll5 ) ) )
-				op5[i].pack( side = TOP, anchor = W )
-	
-
-		btAll5 = Button( listbuilded.interior, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( frameBuilded, btAll5 ) )
-		btAll5.pack( side = LEFT, fill = X, expand = 1)
-		
-		
-		listbuilded.pack( fill = BOTH, expand = 1 )
-		
-			
+		updateBuilded(part2)
 		## part21.pack( side = TOP, fill = BOTH, expand = 1 ) 
-		
 		
 		# Executed
 		##part22 = LabelFrame( part2, text = 'Executed', padx = 5, pady = 5 )
@@ -517,19 +530,21 @@ class Window(Frame):
 		frames = { 'Processors':frameProcessors, 'Interconnections':frameInter, 'Cores':frameNCores, 'Applications':frameApps }
 		
 		# Criando botões
-		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, self.master ) )		
-		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = lambda: Execute (frameBuilded, rundirPath) )
-		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
-		
-			## print('depois dos botões serem executados', listtmp)
+		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, self.master) )		
+		bt2 = Button( part3 , text = 'Update', bg = '#C0C0C0', command = lambda: updateBuilded(part2) )
+		bt3 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = lambda: Execute (frameBuilded, rundirPath, len( rundirPath )) )
+		bt4 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
+	
 		
 		bt1.pack( side = LEFT, fill = X, expand = 1 )
 		bt2.pack( side = LEFT, fill = X, expand = 1 )
 		bt3.pack( side = LEFT, fill = X, expand = 1 )
+		bt4.pack( side = LEFT, fill = X, expand = 1 )
 		
 		part3.pack( fill = X, expand = 1 )
 
-		
+		## Update the platforms builded in list 		
+	
 def main():
 
 	             
