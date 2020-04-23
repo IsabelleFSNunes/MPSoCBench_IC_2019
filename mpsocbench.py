@@ -217,131 +217,149 @@ def about():
 
 def helpUse():
 	messagebox.showinfo(title = 'Help', message = 'falta completar...')
-'''
-Funcoes temporarias para testar os botoes
-'''
 
-def btExit():
-	exit()
-
-def Build(frames, windowMain):
-	
-	count = 0					# variable to do a count of the sections incompetes
-	invalidCombinations = False # variable for to verify if exist valids combinations 
-	
-	# To verify if miss something section
-	count = incompleteSettings(frames)
-	
-	# If the settings are complete, proceed the build this platform
-	if count == 0:
-				
-		pwrMIPS, pwrSPARC = pwr(frames['Processors'])
-		
-		Matriz = validPlatforms( )
-		
-		procs = selected( frames['Processors'] )
-		inter = selected( frames['Interconnections'] )
-		lin = selected( frames['Applications'] )
-		col = selected( frames['Cores'] )
-		
-		for p in procs:
-			for i in inter:
-				if i == 0:
-					i = 'noc.at'
-				elif i == 1:
-					i = 'noc.lt'
-				elif i == 2:
-					i = 'router.lt'
-				
-				for l in lin:		# applications
-					for c in col:		# num cores
-						if Matriz[l][c] == False:
-							invalidCombinations = True
-						else:
-							currentPlatform = processors[p] + '.' + i + '.'
-							
-							power = False
-							
-							if (p == 'MIPS' and pwrMIPS) or (p == 'SPARC' and pwrSPARC) :
-								currentPlatform  = currentPlatform  + 'pwr.'
-								power = True
-								
-							currentPlatform  = currentPlatform  + n_cores[c] + '.' + applications2[l]
-							
-							# straighten the directory's name
-							currentPlatform  = currentPlatform.lower()
-							
-							print( currentPlatform )	# temporary 
-							
-							os.system( 'rm Makefile' )
-							
-							# creates general Makefile 
-							
-							f = open( 'Makefile', 'w' )		
-							f.write( makefile( processors[p].lower(), n_cores[c], applications2[l], power, i, currentPlatform ) )
-							
-							f.close()
-							
-							os.system("make clean distclean all")
-							
-							path = 'rundir/' + currentPlatform
-							print('Creating rundir for 0 ' + path[7:] + '...')
-							# creates rundir for each platform
-							os.system('mkdir -p ' + path)
-							# copies it to its rundir					
-							os.system('make copy')
-							os.system('make clean')
-							# creates rundir makefile
-							run_make(path, processors[p].lower(), n_cores[c], applications2[l], i)        
-							
-							
-							
-		if invalidCombinations:
-			messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.\n")
+'''
+Class for the botton and your functionalities  
+'''
+class functionalities:
+	def __init__(self):
+		self.part2 = 0
+		self.part3 = 0
+		self.frameBuilded = []
+		self.op5 = []
 			
-#---------------------------------------------------------------------------------------------------------------------------		
-def updateBuilded(part2):
+	def btExit():
+		exit()
 
+	def Build(self, frames, windowMain):
 	
-	for item in part2.winfo_children():
-		item.destroy()
+		count = 0					# variable to do a count of the sections incompetes
+		invalidCombinations = False # variable for to verify if exist valids combinations 
 	
-	part21 = Frame(part2)
+		# To verify if miss something section
+		count = incompleteSettings(frames)
 		
-	op5 = []
-	framebuilded = []
 	
-	rundirPath = os.listdir( os.getcwd() + '/rundir/' )	
-	rundirPath.sort()
-	frameBuilded = newObjTkinter( len( rundirPath ) )
-	
-	listbuilded = scrollAbleFrame(part21)
-	
-	for i, j in enumerate( rundirPath ):
-			op5.append( Checkbutton( listbuilded.interior, text = j, variable = frameBuilded[i], command = lambda: notclickedAll( btAll5 ) ) )
-			op5[i].pack( side = TOP, anchor = W )
-	op5.clear()
-
-	btAll5 = Button( listbuilded.interior, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( frameBuilded, btAll5 ) )
-	btAll5.pack( side = LEFT, fill = X, expand = 1)
-
-	listbuilded.pack(fill = Y, expand = 1)
-	
-	part21.pack(fill = Y, expand = 1)
-
-#---------------------------------------------------------------------------------------------------------------------------			
-	
-def Execute( frame, listRundir ):
-	
-	builded_pos = selected( frame )
-	
-	for b in builded_pos:
+		# If the settings are complete, proceed the build this platform
+		if count == 0:
+				
+			pwrMIPS, pwrSPARC = pwr(frames['Processors'])
+						
+			Matriz = validPlatforms( )
+			
+			procs = selected( frames['Processors'] )
+			inter = selected( frames['Interconnections'] )
+			lin = selected( frames['Applications'] )
+			col = selected( frames['Cores'] )
 		
-		rundirPath = 'rundir/'+ listRundir[b]
-		os.chdir(rundirPath)
-		os.system('make run')
-		os.system('make -f Makefile.check check')
-		os.chdir('../..')
+			for p in procs:
+				for i in inter:
+					if i == 0:
+						i = 'noc.at'
+					elif i == 1:
+						i = 'noc.lt'
+					elif i == 2:
+						i = 'router.lt'
+				
+					for l in lin:		# applications
+						for c in col:		# num cores
+							if Matriz[l][c] == False:
+								invalidCombinations = True
+							else:
+								currentPlatform = processors[p] + '.' + i + '.'
+							
+								power = False
+								if (p == 1 and pwrMIPS) or (p == 3 and pwrSPARC):
+									currentPlatform  = currentPlatform  + 'pwr.'
+									power = True
+								
+								currentPlatform  = currentPlatform  + n_cores[c] + '.' + applications2[l]
+							
+								# straighten the directory's name
+								currentPlatform  = currentPlatform.lower()
+							
+								print( currentPlatform )	# temporary 
+							
+								os.system( 'rm Makefile' )
+							
+								# creates general Makefile 
+							
+								f = open( 'Makefile', 'w' )		
+								f.write( makefile( processors[p].lower(), n_cores[c], applications2[l], power, i, currentPlatform ) )
+							
+								f.close()
+							
+								os.system("make clean distclean all")
+							
+								path = 'rundir/' + currentPlatform
+								print('Creating rundir for 0 ' + path[7:] + '...')
+								# creates rundir for each platform
+								os.system('mkdir -p ' + path)
+								# copies it to its rundir					
+								os.system('make copy')
+								os.system('make clean')
+								# creates rundir makefile
+								run_make(path, processors[p].lower(), n_cores[c], applications2[l], i)        
+								
+															
+								print("Finished\n")		## temporary
+								
+								functionalities.buildedBefore(self)
+								
+								print("Update\n")		## temporary
+								
+			if invalidCombinations:
+				messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.\n")
+			
+	#---------------------------------------------------------------------------------------------------------------------------
+	## to show the older platforms
+	def buildedBefore(self):
+		
+		## Clear all itens used before
+		for item in self.part2.winfo_children():
+			item.destroy()
+			self.op5.clear()
+			self.frameBuilded.clear()
+		
+		## Renew all itens
+		part21 = Frame(self.part2)
+		title = Label(part21 , text = "Builded")
+		title.pack(fill = X, expand = 1)
+			
+		rundirPath = os.listdir( os.getcwd() + '/rundir/' )	
+		rundirPath.sort()
+		self.frameBuilded = newObjTkinter( len( rundirPath ) )
+	
+		listbuilded = scrollAbleFrame(part21)
+	
+		for i, j in enumerate( rundirPath ):
+				(self.op5).append( Checkbutton( listbuilded.interior, text = j, variable = self.frameBuilded[i], command = lambda: notclickedAll( btAll5 ) ) )
+				(self.op5)[i].pack( side = TOP, anchor = W)
+	
+		btAll5 = Button( listbuilded.interior, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( self.frameBuilded, btAll5 ) )
+		btAll5.pack( side = LEFT, fill = X, expand = 1)
+
+		listbuilded.pack(fill = Y, expand = 1)
+		part21.config(relief = SUNKEN, bd = 1)
+		part21.pack(fill = X, expand = 1, anchor = N)
+
+			#-------------------------------------------------------------------------------------------------------------------------			
+	
+	def Execute(self):
+		frame = self.frameBuilded
+		
+		builded_pos = selected( frame )
+		
+		listRundir = self.op5
+				
+		for b in builded_pos:	
+			rundirPath = 'rundir/'+ listRundir[b]['text']
+			os.chdir(rundirPath)
+			os.system('make run')
+			os.system('make -f Makefile.check check')
+			os.chdir('../..')
+
+	#---------------------------------------------------------------------------------------------------------------------------			
 
 class scrollAbleFrame(Frame):
 	def __init__(self, master, **kwargs):
@@ -512,9 +530,10 @@ class Window(Frame):
 		
 		# Builded
 		
-		updateBuilded(part2)
-		## part21.pack( side = TOP, fill = BOTH, expand = 1 ) 
+		framesB = functionalities()
+		framesB.part2 = part2
 		
+		functionalities.buildedBefore(framesB)
 		# Executed
 		##part22 = LabelFrame( part2, text = 'Executed', padx = 5, pady = 5 )
 		##part22.pack( side = TOP, fill = BOTH, expand = 1 ) 
@@ -530,16 +549,13 @@ class Window(Frame):
 		frames = { 'Processors':frameProcessors, 'Interconnections':frameInter, 'Cores':frameNCores, 'Applications':frameApps }
 		
 		# Criando botões
-		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: Build( frames, self.master) )		
-		bt2 = Button( part3 , text = 'Update', bg = '#C0C0C0', command = lambda: updateBuilded(part2) )
-		bt3 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = lambda: Execute (frameBuilded, rundirPath, len( rundirPath )) )
-		bt4 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = btExit )
+		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: functionalities.Build( framesB, frames, self.master) )		
+		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = lambda: functionalities.Execute (framesB) )
+		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = functionalities.btExit )
 	
-		
 		bt1.pack( side = LEFT, fill = X, expand = 1 )
 		bt2.pack( side = LEFT, fill = X, expand = 1 )
 		bt3.pack( side = LEFT, fill = X, expand = 1 )
-		bt4.pack( side = LEFT, fill = X, expand = 1 )
 		
 		part3.pack( fill = X, expand = 1 )
 
