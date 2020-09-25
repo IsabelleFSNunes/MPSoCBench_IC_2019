@@ -1,10 +1,18 @@
+import os
+import PIL
+import sys
+import subprocess
+import shutil
+import tkinter
+import webbrowser
+
 from tkinter import *
 
 from tkinter import messagebox
+from tkinter import filedialog
 
-import os
-import sys
-import subprocess
+from PIL import ImageTk, Image
+
 
 ## Globals Variables 
 processors = [ 'ARM', 'MIPS',  'PowerPC', 'SPARC' ]
@@ -67,7 +75,6 @@ def newObjTkinter(n):
 	
 	return variables
 
-
 ## When the button All was clicked 
 def clickedAll( var, bt ) :
 	n = len( var )
@@ -88,7 +95,7 @@ def notclickedAll( bt ):
 	if bt['relief'] == SUNKEN:
 		bt.config( relief = RAISED )
 	
-## To verify the Incomplete Settings 
+## To verify the Incomplete  
 def incompleteSettings(frame):
 	
 	tmp = []			# Lista temporaria para receber os onvalue dos objetos das checkboxes
@@ -120,6 +127,8 @@ def pwr( frameP ):
 		pwrSPARC = messagebox.askyesno(title = 'Enable power', message = 'Would you like enable the Processor SPARC with power consumption ?')
 		
 	return pwrMIPS, pwrSPARC
+
+
 
 # in order to commit to version control
 def clean():
@@ -212,11 +221,42 @@ def makefile( proc , nCores, app, power, inter, currentPlatform ):
 	return make
 		
 ## Informations about the MPSoCBench ( GUI )
+# ----------------------------------------------------------------------------
+
 def about():
-	messagebox.showinfo(title = 'About', message = 'falta completar...')
+	windowAbout = Tk();
+	windowAbout.geometry('720x340')
+	
+	newWindowAbout = LabelFrame(windowAbout, padx = 5, pady = 5 )
+	
+	about_text1 = Label( newWindowAbout, text = " MPSoCBench is a framework to build and to execute homogeneous platforms multicore.\n The initial script developed in Unicamp and the framework had been providing in your official site since 2014. \n" , padx = 5, pady = 5 )
+	about_text1.pack(side = TOP)
+	
+	about_text2 = Label( newWindowAbout, text = "\n\nFor more informations about the License’s MPSoCBench go to this site:", padx = 5, pady = 5 )
+	about_text2.pack(side = TOP)
+	
+	btSite1 = Button( newWindowAbout, text = 'http://www.archc.org/benchs/mpsocbench/LICENSE', bg = '#C0C0C0', command = lambda: webbrowser.open('http://www.archc.org/benchs/mpsocbench/LICENSE') )
+	btSite1.pack( side = TOP)
+		
+	
+	about_text3 = Label( newWindowAbout, text = "\n\n For more details about the MPSoCBench:", padx = 5, pady = 5 )
+	about_text3.pack(side = TOP)
+	
+	btSite2 = Button( newWindowAbout, text = 'http://www.archc.org/benchs/mpsocbench/', bg = '#C0C0C0', command = lambda: webbrowser.open('http://www.archc.org/benchs/mpsocbench/') )
+	btSite2.pack( side = TOP)
+	
+	about_text4 = Label( newWindowAbout, text = "\n\n The Update in MPSoCBench including the Graphical Interface User (GUI) had worked \n on a Research Project, 2019-2020, that developed in the \n High Performance Computing Systems Laboratory (LSCAD - UFMS)\n by Isabelle Nunes and Liana Duenha. \n ", padx = 5, pady = 5 )
+	about_text4.pack(side = TOP)
+	
+	newWindowAbout.pack()
+# ----------------------------------------------------------------------------
 
 def helpUse():
-	messagebox.showinfo(title = 'Help', message = 'falta completar...')
+	windowHelp = Tk()
+	
+	newWindowHelp = LabelFrame(windowHelp, padx = 5, pady = 5 )
+	
+	
 
 '''
 Class for the botton and your functionalities  
@@ -225,9 +265,13 @@ class functionalities:
 	def __init__(self):
 		self.part2 = 0
 		self.part3 = 0
-		self.frameBuilded = []
+		self.framebuilt = []
 		self.op5 = []
-			
+		
+		## variable used in executed 
+		self.frameExecuted = []
+		self.op6 = []  ## rundir 	
+				
 	def btExit():
 		exit()
 
@@ -301,65 +345,123 @@ class functionalities:
 								# creates rundir makefile
 								run_make(path, processors[p].lower(), n_cores[c], applications2[l], i)        
 								
-															
-								print("Finished\n")		## temporary
+								functionalities.built(self) ## update 
 								
-								functionalities.buildedBefore(self)
-								
-								print("Update\n")		## temporary
 								
 			if invalidCombinations:
 				messagebox.showinfo(title = 'Warning', message = "Some settings selected won't be completed. You can to verify in Menu > Help the settings that are valids and that they don't.\n")
 			
 	#---------------------------------------------------------------------------------------------------------------------------
 	## to show the older platforms
-	def buildedBefore(self):
+	def built(self):
 		
-		## Clear all itens used before
-		for item in self.part2.winfo_children():
-			item.destroy()
+		## Clear all itens used
+		for item in self.part3.winfo_children():
+			# print('item:', item)				## temporary
+			for i in item.winfo_children():
+				i.destroy()
+			
 			self.op5.clear()
-			self.frameBuilded.clear()
+			self.op6.clear()
+			self.framebuilt.clear()
+			item.destroy()
 		
 		## Renew all itens
-		part21 = Frame(self.part2)
-		title = Label(part21 , text = "Builded")
+		#self.part3 = Frame(self.part2)
+		title = Label(self.part3 , text = "built")
 		title.pack(fill = X, expand = 1)
 			
 		rundirPath = os.listdir( os.getcwd() + '/rundir/' )	
 		rundirPath.sort()
-		self.frameBuilded = newObjTkinter( len( rundirPath ) )
-	
-		listbuilded = scrollAbleFrame(part21)
+		
+		self.framebuilt = newObjTkinter( len( rundirPath ) )
+		
+		listbuilt = scrollAbleFrame(self.part3)
+		listbuilt1 = Frame( listbuilt.interior )
+		listbuilt2 = Frame( listbuilt.interior )
+		
 	
 		for i, j in enumerate( rundirPath ):
-				(self.op5).append( Checkbutton( listbuilded.interior, text = j, variable = self.frameBuilded[i], command = lambda: notclickedAll( btAll5 ) ) )
-				(self.op5)[i].pack( side = TOP, anchor = W)
-	
-		btAll5 = Button( listbuilded.interior, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( self.frameBuilded, btAll5 ) )
+				(self.op5).append( Checkbutton( listbuilt1, text = j, variable = self.framebuilt[i], command = lambda: notclickedAll( btAll5 ) ) )
+				if  os.path.exists(os.getcwd() + '/rundir/' + j + "/local_report.txt"): 
+					img1 = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/folder1.png" ).resize((20 , 20 ), PIL.Image.ANTIALIAS) )
+					(self.op6).append( Button( listbuilt2, text = j, image = img1, command = lambda: functionalities.showRundir(self.op6) ) )
+					(self.op6)[i].image = img1
+					
+				else:				
+					img0 = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/folder0.png" ).resize((20 , 20 ), PIL.Image.ANTIALIAS) )
+					(self.op6).append( Button( listbuilt2, text = j, image = img0, command = lambda: functionalities.notExecuted(self.op6) ) )
+					(self.op6)[i].image = img0
+					
+				(self.op6)[i].pack( side = TOP )	
+				(self.op5)[i].pack( pady = 2.5, side = TOP, anchor = W)
+		
+				
+		btAll5 = Button( listbuilt1, text = 'All', bg = '#C0C0C0', command = lambda: clickedAll( self.framebuilt, btAll5 ) )
 		btAll5.pack( side = LEFT, fill = X, expand = 1)
 
-		listbuilded.pack(fill = Y, expand = 1)
-		part21.config(relief = SUNKEN, bd = 1)
-		part21.pack(fill = X, expand = 1, anchor = N)
-
+		listbuilt1.pack( side = LEFT, fill = Y, expand = 1 )
+		listbuilt2.pack( side = LEFT, fill = Y, expand = 1 )
+		listbuilt.pack(fill = Y, expand = 1)
+		self.part3.config(relief = SUNKEN, bd = 1)
+		self.part3.pack()
+		
 			#-------------------------------------------------------------------------------------------------------------------------			
 	
 	def Execute(self):
-		frame = self.frameBuilded
+		frame = self.framebuilt
 		
-		builded_pos = selected( frame )
+		built_pos = selected( frame )
 		
 		listRundir = self.op5
 				
-		for b in builded_pos:	
+		for b in built_pos:
+			print('built_pos', 	built_pos, '\n')
 			rundirPath = 'rundir/'+ listRundir[b]['text']
 			os.chdir(rundirPath)
 			os.system('make run')
 			os.system('make -f Makefile.check check')
 			os.chdir('../..')
+											
+			functionalities.built(self)
+			
+			
+#---------------------------------------------------------------------------------------------------------------------------	
+	## To delete selected platforms 
+	def deleteItens(self):
+		frame = self.framebuilt
+		
+		built_pos = selected( frame )
+		
+		listRundir = self.op5
+		
+		for b in built_pos:
+			print('built_pos', built_pos, '\n')		# temporary
+			rundirPath = 'rundir/'+ listRundir[b]['text']
+			shutil.rmtree(rundirPath)
+			
+		functionalities.built(self)						
+		
+		# for d in listdeleted: 
+		#	(self.op5).pop(d.str())
 
-	#---------------------------------------------------------------------------------------------------------------------------			
+		
+#---------------------------------------------------------------------------------------------------------------------------	
+		## To show the directory 'rundir' of the selected platforms 
+	
+	def showRundir(listButtonsRundir):
+		for item in listButtonsRundir:
+			if item['state'] == ACTIVE:
+				print(item['text'])
+				os.system("nautilus " + os.getcwd() + '/rundir/'+ item['text'] )
+				item.flash()
+
+	def notExecuted(self):
+		messagebox.showinfo(title = 'Not Executed', message = 'Try execute the platform selected.')
+
+#---------------------------------------------------------------------------------------------------------------------------	
+		
+			#---------------------------------------------------------------------------------------------------------------------------			
 
 class scrollAbleFrame(Frame):
 	def __init__(self, master, **kwargs):
@@ -370,21 +472,20 @@ class scrollAbleFrame(Frame):
 		self.scroll.pack(side = RIGHT, fill = Y, expand = 0 )
 		self.canvas = Canvas(self, yscrollcommand = self.scroll.set)
 		self.canvas.config(relief = SUNKEN)
-		self.canvas.pack( side = LEFT, fill = BOTH, expand = 1)
+		self.canvas.pack( side = LEFT, fill = BOTH, expand = 0)
 		self.scroll.config( command = self.canvas.yview )
 		
 
 		# create a frame inside the canvas which will be scrolled with it
 		self.interior = Frame(self.canvas, **kwargs)
 		self.canvas.create_window(0, 0, window=self.interior, anchor = NW)
-
 		self.bind('<Configure>', self.set_scrollregion)
 
 
 	def set_scrollregion(self, event = None):
 		self.canvas.configure(scrollregion = self.canvas.bbox('all'))
 
-
+			#---------------------------------------------------------------------------------------------------------------------------			
 # Classe destinada a interface grafica
 
 class Window(Frame):	
@@ -392,16 +493,25 @@ class Window(Frame):
 		Frame.__init__( self, master )
 		master.title('MPSoCBench')
 		
+
 		# Menu (Initial)
 		menubar = Menu( self.master, bg = '#A9A9A9' ) 		
 		menubar.add_command( label = 'About', command = about )
 		menubar.add_command( label = 'Help', command = helpUse )
 		self.master.config( menu = menubar ) 
-
+		
 		
 		# Parte 1 : Settings options 
-		part1 = LabelFrame( master, text = 'SETTINGS', font = 'bold', padx = 5, pady = 5 )
-			
+		part1 = LabelFrame( master, font = 'bold', padx = 5, pady = 5 )
+		
+		
+		'''
+		bt0 = Button( master ) 
+		photo = PIL.ImageTk.PhotoImage( PIL.Image.open( "header.png" ))
+		icon = Label( master, image = photo )
+		icon.pack( anchor = NW )
+		'''
+		
 		## Parte 1.1. : Processors
 		part11 = LabelFrame( part1, text = 'Processors', font = 'bold', padx = 5, pady = 5 )
 		part11.pack( side = TOP, fill = X, expand = 1 )
@@ -439,7 +549,7 @@ class Window(Frame):
 		
 				
 		## Parte 1.3. : numero de cores
-		part13 = LabelFrame( part1, text = 'Cores', font = 'bold', padx = 5, pady = 5 )
+		part13 = LabelFrame( part1, text = 'Numbers of cores', font = 'bold', padx = 5, pady = 5 )
 		part13.pack( side = TOP, fill = X, expand = 1 )
 		
 		# Inicialização de algumas variaveis que serão usadas nesta parte 1.3
@@ -523,25 +633,22 @@ class Window(Frame):
 		frameApps.extend( frameSplash2 )
 		frameApps.extend( frameMisc )		
 		
-		part1.pack( side = LEFT, padx = 5, pady = 5, anchor = W )
+		part1.pack( side = LEFT, padx = 5, pady = 5, anchor = NW )
 	    	    
 	    # Parte 2 : Direcionada para a lista de Configurações já escolhidas
-		part2 = Frame( master, padx = 5, pady = 5 )
+		part2 = Frame( master, padx = 5 )
+		part4 = Frame( master, padx = 5 )
 		
-		# Builded
 		
 		framesB = functionalities()
+		
+		# built
 		framesB.part2 = part2
-		
-		functionalities.buildedBefore(framesB)
-		# Executed
-		##part22 = LabelFrame( part2, text = 'Executed', padx = 5, pady = 5 )
-		##part22.pack( side = TOP, fill = BOTH, expand = 1 ) 
-		
-		
+		framesB.part3 = Frame(part2)
+		functionalities.built(framesB)
 		part2.config( relief = FLAT )
-		part2.pack( side = LEFT, fill = BOTH, expand = 1, anchor = E )
-	    
+		part2.pack( side = TOP, fill = BOTH, expand = 1, anchor = E )
+		
 	    # Parte 3 : Direcionada para os botões de Configurações
 		part3 = LabelFrame( part1 )
 		part3.config( relief = FLAT )
@@ -550,25 +657,35 @@ class Window(Frame):
 		
 		# Criando botões
 		bt1 = Button( part3, text = 'Build', bg = '#C0C0C0', command = lambda: functionalities.Build( framesB, frames, self.master) )		
-		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = lambda: functionalities.Execute (framesB) )
+		bt2 = Button( part3, text = 'Execute', bg = '#C0C0C0', command = lambda: functionalities.Execute(framesB) )
 		bt3 = Button( part3, text = 'Quit', bg = '#C0C0C0', command = functionalities.btExit )
-	
+		bt4 = Button( part3, text = 'Delete', bg = '#C0C0C0', command = lambda: functionalities.deleteItens(framesB) )
+				
 		bt1.pack( side = LEFT, fill = X, expand = 1 )
 		bt2.pack( side = LEFT, fill = X, expand = 1 )
+		bt4.pack( side = LEFT, fill = X, expand = 1 )
 		bt3.pack( side = LEFT, fill = X, expand = 1 )
 		
+				
 		part3.pack( fill = X, expand = 1 )
 
-		## Update the platforms builded in list 		
+		## Update the platforms built in list 		
 	
+
 def main():
 
 	             
 	root = Tk()
-
-	root.geometry('1040x480')
-
-	app = Window(root)
+	## 980x600
+	root.geometry('811x580')
+	
+	# photo mpsocbench	------------------------------------------------------------
+	photo = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/header.png" ))
+	bt0 = Button( root, image = photo, relief = FLAT, command = lambda: webbrowser.open('http://www.archc.org/benchs/mpsocbench/index.html') ) 
+	bt0.pack()
+	## -----------------------------------------------------------------------------
+	
+	app = Window(root)	
 
 	root.mainloop()
 
