@@ -7,7 +7,6 @@ import tkinter
 import webbrowser
 
 from tkinter import *
-
 from tkinter import messagebox
 from tkinter import filedialog
 
@@ -253,10 +252,58 @@ def about():
 
 def helpUse():
 	windowHelp = Tk()
-	
+	windowHelp.geometry('680x620')
 	newWindowHelp = LabelFrame(windowHelp, padx = 5, pady = 5 )
 	
+	help_text1 = Label( newWindowHelp, text = "On the left section shown in Interface are the settings available in this framework \n" , padx = 5, pady = 5)
+	help_text1.pack(side = TOP)
 	
+	help_text2 = Label( newWindowHelp, text = "Below the settings are the buttons with the possible actions.\n \
+	* Build : To create the platform with some valid combination. \n \
+	* Executed: To execute the platform that could be chosen on the right section\n \
+	* Delete: To delete the platform(s) on the right section. \n\
+	* Quit: To exit and close the window."
+	, padx = 5, pady = 5)
+	help_text2.pack(side = TOP)
+
+	help_text3 = Label( newWindowHelp, text = "On the right section show the platforms built. \n \
+	If the icon is black and white, the platform has not been executed yet. \n \
+	However, if the icon had colored, it had executed and you can see the values \n \
+	on the directory that are showing when you click the icon.\n " , padx = 5, pady = 5, anchor = E )
+	help_text3.pack(side = TOP)
+	
+	help_text4 = Label( newWindowHelp, text = "You must choose at the least one option for each subsection \n\
+	( Processors, Interconnections, Numbers of cores, Applications ) \n \
+	for clicks on the Build. If you selected the Processors MIPS or SPARC \n \
+	will appear a message for use " , padx = 5, pady = 5)
+	help_text4.pack(side = TOP)
+	
+	help_text6 =Label( newWindowHelp, text= "Table with available platforms. 0 - Invalids and 1- Valids", padx = 5, pady = 5, anchor = N)
+	help_text6.pack(side = TOP)
+	
+	help_text5 = Label( newWindowHelp, text = "    \
+	                      	01	02	04	08	16	32	64\n \
+	Basicmath             	1	1	1	1	1	1	1\n \
+	Dijkstra               	1	1	1	1	1	1	1\n \
+	SHA                    	1	1	1	1	1	1	1\n \
+	Susan-corners        	1	1	1	1	1	1	0\n\
+	Susan-edges            	1	1	1	1	1	1	0\n\
+	Susan-smoothing	1	1	1	1	0	0	0\n\
+	Stringsearch    	1	1	1	1	1	1	1\n\
+	FFT                   	1	1	1	1	1	0	0\n\
+	LU                     	1	1	1	1	1	0	0\n\
+	Water                  	1	1	1	1	1	0	0\n\
+	Water-spatial          	1	1	1	1	0	0	0\n\
+	Multi - parallel       	0	0	1	1	1	1	1\n\
+	Multi - 8              	0	0	0	1	0	0	0\n\
+	Multi - 16             	0	0	0	0	1	0	0\n\
+	Office-Telecomm      	0	0	1	0	0	0	0\n\
+	Security               	0	0	1	0	0	0	0\n\
+	Network-automotive  0	0	1	0	0	0	0\n"
+	, padx = 5, pady = 5, anchor = W )
+	help_text5.pack(side = TOP)
+
+	newWindowHelp.pack()
 
 '''
 Class for the botton and your functionalities  
@@ -368,7 +415,7 @@ class functionalities:
 		
 		## Renew all itens
 		#self.part3 = Frame(self.part2)
-		title = Label(self.part3 , text = "built")
+		title = Label(self.part3 , text = "BUILT")
 		title.pack(fill = X, expand = 1)
 			
 		rundirPath = os.listdir( os.getcwd() + '/rundir/' )	
@@ -384,12 +431,12 @@ class functionalities:
 		for i, j in enumerate( rundirPath ):
 				(self.op5).append( Checkbutton( listbuilt1, text = j, variable = self.framebuilt[i], command = lambda: notclickedAll( btAll5 ) ) )
 				if  os.path.exists(os.getcwd() + '/rundir/' + j + "/local_report.txt"): 
-					img1 = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/folder1.png" ).resize((20 , 20 ), PIL.Image.ANTIALIAS) )
+					img1 = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/image/folder1.png" ).resize((20 , 20 ), PIL.Image.ANTIALIAS) )
 					(self.op6).append( Button( listbuilt2, text = j, image = img1, command = lambda: functionalities.showRundir(self.op6) ) )
 					(self.op6)[i].image = img1
 					
 				else:				
-					img0 = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/folder0.png" ).resize((20 , 20 ), PIL.Image.ANTIALIAS) )
+					img0 = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/image/folder0.png" ).resize((20 , 20 ), PIL.Image.ANTIALIAS) )
 					(self.op6).append( Button( listbuilt2, text = j, image = img0, command = lambda: functionalities.notExecuted(self.op6) ) )
 					(self.op6)[i].image = img0
 					
@@ -441,9 +488,6 @@ class functionalities:
 			shutil.rmtree(rundirPath)
 			
 		functionalities.built(self)						
-		
-		# for d in listdeleted: 
-		#	(self.op5).pop(d.str())
 
 		
 #---------------------------------------------------------------------------------------------------------------------------	
@@ -680,7 +724,7 @@ def main():
 	root.geometry('811x580')
 	
 	# photo mpsocbench	------------------------------------------------------------
-	photo = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/header.png" ))
+	photo = PIL.ImageTk.PhotoImage( PIL.Image.open(os.getcwd() + "/image/header.png" ))
 	bt0 = Button( root, image = photo, relief = FLAT, command = lambda: webbrowser.open('http://www.archc.org/benchs/mpsocbench/index.html') ) 
 	bt0.pack()
 	## -----------------------------------------------------------------------------
