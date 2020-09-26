@@ -24,6 +24,11 @@ The command in the terminal for use the GUI mpsocbench:
 									CSV
 -----------------------------------------------------------------------------
 
+You must need update 
+~[Documents]/MPSoCBench/defines.h
+adding a line below: 
+
+#define LOCAL_FILE_MEASURES_NAME_CSV "local_report.csv"
 
 times local-report:
 
