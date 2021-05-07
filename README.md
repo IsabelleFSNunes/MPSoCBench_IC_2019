@@ -1,6 +1,6 @@
 # MPSoCBench_IC_2019
 
-![MPSOCBENCH](https://github.com/IsabelleFSNunes/MPSoCBench_IC_2019/blob/master/image/logoMpsocbench.png)
+![MPSOCBENCH](https://github.com/IsabelleFSNunes/MPSoCBench_IC_2019/blob/master/image/Interface_atualizada_para_artigo.png)
 
 You must put the mpsocbench.py and folder image on the same directory of MPSoCBench.
 
@@ -154,5 +154,3 @@ to update with the file's Path on git:
 ~/MPSoCBench_IC_2019/Others/11/tlm_memory.cpp
 ```
 ---
- 
-
